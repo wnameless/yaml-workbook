@@ -1,0 +1,14 @@
+---
+name: Document One
+type: config
+---
+name: Document Two
+type: data
+items:
+  - first
+  - second
+---
+name: Document Three
+settings:
+  enabled: true
+  level: 5

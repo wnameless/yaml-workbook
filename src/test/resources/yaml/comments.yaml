@@ -1,0 +1,8 @@
+# This is a configuration file
+database:
+  # Database connection settings
+  host: localhost # primary host
+  port: 5432 # default PostgreSQL port
+  # Credentials
+  username: admin
+  password: secret # change in production

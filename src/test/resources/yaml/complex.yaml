@@ -1,0 +1,20 @@
+# Application configuration
+app:
+  name: MyApp
+  version: 1.0.0
+  features:
+    - authentication
+    - logging
+    - caching
+  database:
+    primary:
+      host: db1.example.com
+      port: 5432
+    replica:
+      host: db2.example.com
+      port: 5432
+  users:
+    - name: Alice
+      role: admin
+    - name: Bob
+      role: user

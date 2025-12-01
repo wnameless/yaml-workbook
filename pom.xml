@@ -5,10 +5,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.github.wnameless.workbook</groupId>
-  <artifactId>yaml2workbook</artifactId>
+  <artifactId>yaml-workbook</artifactId>
   <version>0.0.1-SNAPSHOT</version>
 
-  <name>yaml2workbook</name>
+  <name>yaml-workbook</name>
   <description>A Java utility to convert YAML to Workbook(Excel) and vice versa</description>
   <url>https://github.com/wnameless/yaml2workbook</url>
 
@@ -30,9 +30,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git@github.com:wnameless/yaml2workbook.git</connection>
-    <developerConnection>scm:git:git@github.com:wnameless/yaml2workbook.git</developerConnection>
-    <url>git@github.com:wnameless/yaml2workbook.git</url>
+    <connection>scm:git:git@github.com:wnameless/yaml-workbook.git</connection>
+    <developerConnection>scm:git:git@github.com:wnameless/yaml-workbook.git</developerConnection>
+    <url>git@github.com:wnameless/yaml-workbook.git</url>
     <tag>HEAD</tag>
   </scm>
 
