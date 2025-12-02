@@ -120,7 +120,7 @@ public class YamlWorkbookReader {
         return parseMapping(rows, indentLevel, startIdx, endIdx, pendingComments);
       } else {
         // Single scalar value
-        ScalarNode node = new ScalarNode(Tag.STR, firstValue, null, null, ScalarStyle.PLAIN);
+        ScalarNode node = new ScalarNode(Tag.STR, unescapeValueIfNeeded(firstValue), null, null, ScalarStyle.PLAIN);
         if (!pendingComments.isEmpty()) {
           node.setBlockComments(pendingComments);
         }
@@ -193,7 +193,7 @@ public class YamlWorkbookReader {
         String inlineValue = getCellValue(row, valueOffset);
         if (inlineValue != null) {
           // Inline scalar value
-          valueNode = new ScalarNode(Tag.STR, inlineValue, null, null, ScalarStyle.PLAIN);
+          valueNode = new ScalarNode(Tag.STR, unescapeValueIfNeeded(inlineValue), null, null, ScalarStyle.PLAIN);
           // Check for value inline comments
           List<CommentLine> inlineComments = parseInlineComments(row, valueOffset + 1);
           if (!inlineComments.isEmpty()) {
@@ -270,7 +270,7 @@ public class YamlWorkbookReader {
 
       if (inlineValue != null) {
         // Inline scalar value
-        itemNode = new ScalarNode(Tag.STR, inlineValue, null, null, ScalarStyle.PLAIN);
+        itemNode = new ScalarNode(Tag.STR, unescapeValueIfNeeded(inlineValue), null, null, ScalarStyle.PLAIN);
         // Check for inline comments
         List<CommentLine> inlineComments = parseInlineComments(row, cellOffset + 2);
         if (!inlineComments.isEmpty()) {
@@ -349,7 +349,20 @@ public class YamlWorkbookReader {
   }
 
   private boolean isComment(String value) {
-    return value != null && value.startsWith(workbookSymbol.getCommentMark());
+    return value != null
+        && value.startsWith(workbookSymbol.getCommentMark())
+        && !value.startsWith(workbookSymbol.getValueEscapeMark() + workbookSymbol.getCommentMark());
+  }
+
+  private String unescapeValueIfNeeded(String value) {
+    if (value == null) {
+      return null;
+    }
+    // Only unescape if value STARTS with escape mark
+    if (value.startsWith(workbookSymbol.getValueEscapeMark())) {
+      return value.substring(workbookSymbol.getValueEscapeMark().length());
+    }
+    return value;
   }
 
   private boolean isItemMark(String value) {

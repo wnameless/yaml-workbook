@@ -381,6 +381,110 @@ class YamlWorkbookWriterTest {
     workbook.close();
   }
 
+  @Test
+  void testValueStartingWithHashEscaping() throws IOException {
+    // Test that values starting with # are escaped with backslash
+    String yaml = """
+        message: '# Look like a comment'
+        hashtag: '#trending'
+        normal: regular value
+        mixed: 'Hello # world'
+        """;
+    Workbook workbook = YamlWorkbook.toWorkbook(yaml);
+
+    assertNotNull(workbook);
+    Sheet sheet = workbook.getSheetAt(0);
+
+    // --- (frontmatter)
+    assertEquals("---", sheet.getRow(0).getCell(0).getStringCellValue());
+
+    // message: \# Look like a comment (escaped because starts with #)
+    Row row1 = sheet.getRow(1);
+    assertEquals("message", row1.getCell(0).getStringCellValue());
+    assertEquals("\\# Look like a comment", row1.getCell(1).getStringCellValue());
+
+    // hashtag: \#trending (escaped because starts with #)
+    Row row2 = sheet.getRow(2);
+    assertEquals("hashtag", row2.getCell(0).getStringCellValue());
+    assertEquals("\\#trending", row2.getCell(1).getStringCellValue());
+
+    // normal: regular value (not escaped)
+    Row row3 = sheet.getRow(3);
+    assertEquals("normal", row3.getCell(0).getStringCellValue());
+    assertEquals("regular value", row3.getCell(1).getStringCellValue());
+
+    // mixed: Hello # world (not escaped because # is not at the start)
+    Row row4 = sheet.getRow(4);
+    assertEquals("mixed", row4.getCell(0).getStringCellValue());
+    assertEquals("Hello # world", row4.getCell(1).getStringCellValue());
+
+    writeExcelFile(workbook, "escaped_hash.xlsx");
+    workbook.close();
+  }
+
+  @Test
+  void testSequenceItemStartingWithHashEscaping() throws IOException {
+    // Test sequence items that start with # are escaped
+    String yaml = """
+        items:
+          - '# first item'
+          - normal item
+          - '# another hash item'
+        """;
+    Workbook workbook = YamlWorkbook.toWorkbook(yaml);
+
+    Sheet sheet = workbook.getSheetAt(0);
+
+    // --- (frontmatter)
+    assertEquals("---", sheet.getRow(0).getCell(0).getStringCellValue());
+
+    // items:
+    assertEquals("items", sheet.getRow(1).getCell(0).getStringCellValue());
+
+    // - \# first item (escaped)
+    Row row2 = sheet.getRow(2);
+    assertEquals("-", row2.getCell(1).getStringCellValue());
+    assertEquals("\\# first item", row2.getCell(2).getStringCellValue());
+
+    // - normal item (not escaped)
+    Row row3 = sheet.getRow(3);
+    assertEquals("-", row3.getCell(1).getStringCellValue());
+    assertEquals("normal item", row3.getCell(2).getStringCellValue());
+
+    // - \# another hash item (escaped)
+    Row row4 = sheet.getRow(4);
+    assertEquals("-", row4.getCell(1).getStringCellValue());
+    assertEquals("\\# another hash item", row4.getCell(2).getStringCellValue());
+
+    writeExcelFile(workbook, "escaped_sequence.xlsx");
+    workbook.close();
+  }
+
+  @Test
+  void testValueStartingWithBackslashEscaping() throws IOException {
+    // Test that values starting with \ are double-escaped
+    String yaml = """
+        path: '\\some\\path'
+        escaped_hash: '\\# not a comment'
+        """;
+    Workbook workbook = YamlWorkbook.toWorkbook(yaml);
+
+    Sheet sheet = workbook.getSheetAt(0);
+
+    // path: \\some\path (only first \ is escaped because it's at the start)
+    Row row1 = sheet.getRow(1);
+    assertEquals("path", row1.getCell(0).getStringCellValue());
+    assertEquals("\\\\some\\path", row1.getCell(1).getStringCellValue());
+
+    // escaped_hash: \\# not a comment (double-escaped)
+    Row row2 = sheet.getRow(2);
+    assertEquals("escaped_hash", row2.getCell(0).getStringCellValue());
+    assertEquals("\\\\# not a comment", row2.getCell(1).getStringCellValue());
+
+    writeExcelFile(workbook, "escaped_backslash.xlsx");
+    workbook.close();
+  }
+
   private String loadYaml(String resourcePath) throws IOException {
     try (InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
       if (is == null) {

@@ -8,6 +8,8 @@ public interface WorkbookSymbol {
 
   String getCommentMark();
 
+  String getValueEscapeMark();
+
   String getItemMark();
 
   Short getIndentationCellNum();

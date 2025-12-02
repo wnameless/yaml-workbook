@@ -368,6 +368,80 @@ class YamlWorkbookReaderTest {
     workbook.close();
   }
 
+  @Test
+  void testValueStartingWithHashRoundTrip() throws IOException {
+    // Test that values starting with # are correctly escaped and unescaped
+    String yaml = """
+        message: '# Look like a comment'
+        hashtag: '#trending'
+        normal: regular value
+        mixed: 'Hello # world'
+        """;
+    Workbook workbook = YamlWorkbook.toWorkbook(yaml);
+
+    YamlWorkbookReader reader = YamlWorkbookReader.builder().build();
+    List<Node> nodes = reader.fromWorkbook(workbook);
+
+    assertEquals(1, nodes.size());
+    MappingNode root = (MappingNode) nodes.get(0);
+    assertEquals(4, root.getValue().size());
+
+    // Values starting with # should be preserved correctly
+    assertEquals("# Look like a comment", getScalarValue(root.getValue().get(0).getValueNode()));
+    assertEquals("#trending", getScalarValue(root.getValue().get(1).getValueNode()));
+    assertEquals("regular value", getScalarValue(root.getValue().get(2).getValueNode()));
+    // # in the middle of the value should NOT be escaped
+    assertEquals("Hello # world", getScalarValue(root.getValue().get(3).getValueNode()));
+
+    workbook.close();
+  }
+
+  @Test
+  void testSequenceItemStartingWithHash() throws IOException {
+    // Test sequence items that start with #
+    String yaml = """
+        items:
+          - '# first item'
+          - normal item
+          - '# another hash item'
+        """;
+    Workbook workbook = YamlWorkbook.toWorkbook(yaml);
+
+    YamlWorkbookReader reader = YamlWorkbookReader.builder().build();
+    List<Node> nodes = reader.fromWorkbook(workbook);
+
+    MappingNode root = (MappingNode) nodes.get(0);
+    SequenceNode items = (SequenceNode) root.getValue().get(0).getValueNode();
+
+    assertEquals(3, items.getValue().size());
+    assertEquals("# first item", getScalarValue(items.getValue().get(0)));
+    assertEquals("normal item", getScalarValue(items.getValue().get(1)));
+    assertEquals("# another hash item", getScalarValue(items.getValue().get(2)));
+
+    workbook.close();
+  }
+
+  @Test
+  void testValueStartingWithBackslash() throws IOException {
+    // Test that values starting with \ are correctly double-escaped
+    String yaml = """
+        path: '\\some\\path'
+        escaped_hash: '\\# not a comment'
+        """;
+    Workbook workbook = YamlWorkbook.toWorkbook(yaml);
+
+    YamlWorkbookReader reader = YamlWorkbookReader.builder().build();
+    List<Node> nodes = reader.fromWorkbook(workbook);
+
+    MappingNode root = (MappingNode) nodes.get(0);
+
+    // Backslash at start should be preserved
+    assertEquals("\\some\\path", getScalarValue(root.getValue().get(0).getValueNode()));
+    assertEquals("\\# not a comment", getScalarValue(root.getValue().get(1).getValueNode()));
+
+    workbook.close();
+  }
+
   private String loadYaml(String resourcePath) throws IOException {
     try (InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
       if (is == null) {

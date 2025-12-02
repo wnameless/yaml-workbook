@@ -99,7 +99,7 @@ public class YamlWorkbookWriter {
     Row row = sheet.createRow(sheet.getLastRowNum() + 1);
     int cellIndex = indentLevel * workbookSymbol.getIndentationCellNum();
     Cell cell = row.createCell(cellIndex);
-    cell.setCellValue(node.getValue());
+    cell.setCellValue(escapeValueIfNeeded(node.getValue()));
   }
 
   private void traverseMappingNode(MappingNode node, Sheet sheet, int indentLevel) {
@@ -119,7 +119,7 @@ public class YamlWorkbookWriter {
           int nextCellIndex = cellIndex + 1;
           nextCellIndex = writeInlineComments(keyNode.getInLineComments(), row, nextCellIndex);
           Cell valueCell = row.createCell(nextCellIndex);
-          valueCell.setCellValue(scalarValue.getValue());
+          valueCell.setCellValue(escapeValueIfNeeded(scalarValue.getValue()));
           writeInlineComments(valueNode.getInLineComments(), row, nextCellIndex + 1);
         } else {
           writeInlineComments(keyNode.getInLineComments(), row, cellIndex + 1);
@@ -145,7 +145,7 @@ public class YamlWorkbookWriter {
 
       if (item instanceof ScalarNode scalarItem) {
         Cell valueCell = row.createCell(cellIndex + 1);
-        valueCell.setCellValue(scalarItem.getValue());
+        valueCell.setCellValue(escapeValueIfNeeded(scalarItem.getValue()));
         writeInlineComments(item.getInLineComments(), row, cellIndex + 2);
       } else {
         traverseAndPrintNode(item, sheet, indentLevel + 1);
@@ -179,6 +179,18 @@ public class YamlWorkbookWriter {
       cell.setCellValue(workbookSymbol.getCommentMark() + " " + comment.getValue().trim());
     }
     return cellIndex;
+  }
+
+  private String escapeValueIfNeeded(String value) {
+    if (value == null) {
+      return null;
+    }
+    // Only escape if value STARTS with comment mark or escape mark
+    if (value.startsWith(workbookSymbol.getCommentMark())
+        || value.startsWith(workbookSymbol.getValueEscapeMark())) {
+      return workbookSymbol.getValueEscapeMark() + value;
+    }
+    return value;
   }
 
 }
