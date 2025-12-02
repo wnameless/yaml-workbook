@@ -135,49 +135,133 @@ class YamlWorkbookWriterTest {
     assertNotNull(workbook);
     Sheet sheet = workbook.getSheetAt(0);
 
-    // --- (frontmatter)
-    Row row0 = sheet.getRow(0);
-    assertEquals("---", row0.getCell(0).getStringCellValue());
+    int rowNum = 0;
 
-    // # This is a configuration file
-    Row row1 = sheet.getRow(1);
-    assertTrue(row1.getCell(0).getStringCellValue().startsWith("#"));
+    // Row 0: --- (frontmatter)
+    Row row = sheet.getRow(rowNum++);
+    assertEquals("---", row.getCell(0).getStringCellValue());
 
-    // database:
-    Row row2 = sheet.getRow(2);
-    assertEquals("database", row2.getCell(0).getStringCellValue());
+    // Row 1: # This is a configuration file (block comment)
+    row = sheet.getRow(rowNum++);
+    assertTrue(row.getCell(0).getStringCellValue().startsWith("#"));
 
-    // # Database connection settings
-    Row row3 = sheet.getRow(3);
-    assertTrue(row3.getCell(1).getStringCellValue().startsWith("#"));
+    // Row 2: database: # main database config (key with inline comment, complex value)
+    row = sheet.getRow(rowNum++);
+    assertEquals("database", row.getCell(0).getStringCellValue());
+    assertEquals("# main database config", row.getCell(1).getStringCellValue());
 
-    // host: localhost # primary host
-    Row row4 = sheet.getRow(4);
-    assertEquals("host", row4.getCell(1).getStringCellValue());
-    assertEquals("localhost", row4.getCell(2).getStringCellValue());
-    assertEquals("# primary host", row4.getCell(3).getStringCellValue());
+    // Row 3: # Database connection settings (block comment, indented)
+    row = sheet.getRow(rowNum++);
+    assertTrue(row.getCell(1).getStringCellValue().startsWith("#"));
 
-    // port: 5432 # default PostgreSQL port
-    Row row5 = sheet.getRow(5);
-    assertEquals("port", row5.getCell(1).getStringCellValue());
-    assertEquals("5432", row5.getCell(2).getStringCellValue());
-    assertEquals("# default PostgreSQL port", row5.getCell(3).getStringCellValue());
+    // Row 4: host: # server address localhost # primary host (key inline + value + value inline)
+    row = sheet.getRow(rowNum++);
+    assertEquals("host", row.getCell(1).getStringCellValue());
+    assertEquals("# server address", row.getCell(2).getStringCellValue());
+    assertEquals("localhost", row.getCell(3).getStringCellValue());
+    assertEquals("# primary host", row.getCell(4).getStringCellValue());
 
-    // # Credentials
-    Row row6 = sheet.getRow(6);
-    assertTrue(row6.getCell(1).getStringCellValue().startsWith("#"));
+    // Row 5: port: 5432 # default PostgreSQL port
+    row = sheet.getRow(rowNum++);
+    assertEquals("port", row.getCell(1).getStringCellValue());
+    assertEquals("5432", row.getCell(2).getStringCellValue());
+    assertEquals("# default PostgreSQL port", row.getCell(3).getStringCellValue());
 
-    // username: admin (no inline comment)
-    Row row7 = sheet.getRow(7);
-    assertEquals("username", row7.getCell(1).getStringCellValue());
-    assertEquals("admin", row7.getCell(2).getStringCellValue());
-    assertNull(row7.getCell(3));
+    // Row 6: # Credentials (block comment)
+    row = sheet.getRow(rowNum++);
+    assertTrue(row.getCell(1).getStringCellValue().startsWith("#"));
 
-    // password: secret # change in production
-    Row row8 = sheet.getRow(8);
-    assertEquals("password", row8.getCell(1).getStringCellValue());
-    assertEquals("secret", row8.getCell(2).getStringCellValue());
-    assertEquals("# change in production", row8.getCell(3).getStringCellValue());
+    // Row 7: username: admin (no inline comment)
+    row = sheet.getRow(rowNum++);
+    assertEquals("username", row.getCell(1).getStringCellValue());
+    assertEquals("admin", row.getCell(2).getStringCellValue());
+    assertNull(row.getCell(3));
+
+    // Row 8: password: secret # change in production
+    row = sheet.getRow(rowNum++);
+    assertEquals("password", row.getCell(1).getStringCellValue());
+    assertEquals("secret", row.getCell(2).getStringCellValue());
+    assertEquals("# change in production", row.getCell(3).getStringCellValue());
+
+    // Row 9: connection: # connection pool settings (key with inline comment, complex value)
+    row = sheet.getRow(rowNum++);
+    assertEquals("connection", row.getCell(1).getStringCellValue());
+    assertEquals("# connection pool settings", row.getCell(2).getStringCellValue());
+
+    // Row 10: pool_size: # max connections 10 (key inline + value)
+    row = sheet.getRow(rowNum++);
+    assertEquals("pool_size", row.getCell(2).getStringCellValue());
+    assertEquals("# max connections", row.getCell(3).getStringCellValue());
+    assertEquals("10", row.getCell(4).getStringCellValue());
+
+    // Row 11: timeout: # in seconds 30 # 30 seconds (key inline + value + value inline)
+    row = sheet.getRow(rowNum++);
+    assertEquals("timeout", row.getCell(2).getStringCellValue());
+    assertEquals("# in seconds", row.getCell(3).getStringCellValue());
+    assertEquals("30", row.getCell(4).getStringCellValue());
+    assertEquals("# 30 seconds", row.getCell(5).getStringCellValue());
+
+    // Row 12: replicas: # read replicas (key with inline comment, sequence value)
+    row = sheet.getRow(rowNum++);
+    assertEquals("replicas", row.getCell(1).getStringCellValue());
+    assertEquals("# read replicas", row.getCell(2).getStringCellValue());
+
+    // Row 13: - (sequence item mark for first replica)
+    row = sheet.getRow(rowNum++);
+    assertEquals("-", row.getCell(2).getStringCellValue());
+
+    // Row 14: host: replica1.local # first replica
+    row = sheet.getRow(rowNum++);
+    assertEquals("host", row.getCell(3).getStringCellValue());
+    assertEquals("replica1.local", row.getCell(4).getStringCellValue());
+    assertEquals("# first replica", row.getCell(5).getStringCellValue());
+
+    // Row 15: port: 5432
+    row = sheet.getRow(rowNum++);
+    assertEquals("port", row.getCell(3).getStringCellValue());
+    assertEquals("5432", row.getCell(4).getStringCellValue());
+
+    // Row 16: - (sequence item mark for second replica)
+    row = sheet.getRow(rowNum++);
+    assertEquals("-", row.getCell(2).getStringCellValue());
+
+    // Row 17: host: # second replica address replica2.local (key inline + value)
+    row = sheet.getRow(rowNum++);
+    assertEquals("host", row.getCell(3).getStringCellValue());
+    assertEquals("# second replica address", row.getCell(4).getStringCellValue());
+    assertEquals("replica2.local", row.getCell(5).getStringCellValue());
+
+    // Row 18: port: 5433 # non-standard port
+    row = sheet.getRow(rowNum++);
+    assertEquals("port", row.getCell(3).getStringCellValue());
+    assertEquals("5433", row.getCell(4).getStringCellValue());
+    assertEquals("# non-standard port", row.getCell(5).getStringCellValue());
+
+    // Row 19: allowed_ips: # whitelist (key with inline comment, simple array)
+    row = sheet.getRow(rowNum++);
+    assertEquals("allowed_ips", row.getCell(1).getStringCellValue());
+    assertEquals("# whitelist", row.getCell(2).getStringCellValue());
+
+    // Row 20: - 192.168.1.1 # main server
+    row = sheet.getRow(rowNum++);
+    assertEquals("-", row.getCell(2).getStringCellValue());
+    assertEquals("192.168.1.1", row.getCell(3).getStringCellValue());
+    assertEquals("# main server", row.getCell(4).getStringCellValue());
+
+    // Row 21: - 192.168.1.2 # backup server
+    row = sheet.getRow(rowNum++);
+    assertEquals("-", row.getCell(2).getStringCellValue());
+    assertEquals("192.168.1.2", row.getCell(3).getStringCellValue());
+    assertEquals("# backup server", row.getCell(4).getStringCellValue());
+
+    // Row 22: # internal network (block comment before array item)
+    row = sheet.getRow(rowNum++);
+    assertTrue(row.getCell(2).getStringCellValue().startsWith("#"));
+
+    // Row 23: - 10.0.0.1
+    row = sheet.getRow(rowNum++);
+    assertEquals("-", row.getCell(2).getStringCellValue());
+    assertEquals("10.0.0.1", row.getCell(3).getStringCellValue());
 
     writeExcelFile(workbook, "comments.xlsx");
     workbook.close();

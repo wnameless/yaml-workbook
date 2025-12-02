@@ -195,19 +195,161 @@ class YamlWorkbookReaderTest {
 
   @Test
   void testInlineCommentsPreserved() throws IOException {
-    String yaml = loadYaml("yaml/comments.yaml");
+    // Use a simple YAML with only value inline comments (no key inline comments)
+    // to test reader's inline comment preservation
+    String yaml = """
+        server:
+          host: localhost # primary host
+          port: 5432 # default port
+        """;
     Workbook workbook = YamlWorkbook.toWorkbook(yaml);
 
     YamlWorkbookReader reader = YamlWorkbookReader.builder().build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
     MappingNode root = (MappingNode) nodes.get(0);
-    MappingNode database = (MappingNode) root.getValue().get(0).getValueNode();
+    MappingNode server = (MappingNode) root.getValue().get(0).getValueNode();
 
     // host: localhost # primary host
-    Node hostValue = database.getValue().get(0).getValueNode();
+    Node hostValue = server.getValue().get(0).getValueNode();
     assertNotNull(hostValue.getInLineComments());
     assertFalse(hostValue.getInLineComments().isEmpty());
+
+    // port: 5432 # default port
+    Node portValue = server.getValue().get(1).getValueNode();
+    assertNotNull(portValue.getInLineComments());
+    assertFalse(portValue.getInLineComments().isEmpty());
+
+    workbook.close();
+  }
+
+  @Test
+  void testCommentsYamlRoundTrip() throws IOException {
+    // Test round-trip for comments.yaml with the enhanced comment structure
+    // including key inline comments (comments after keys)
+    String yaml = loadYaml("yaml/comments.yaml");
+    Workbook workbook = YamlWorkbook.toWorkbook(yaml);
+
+    YamlWorkbookReader reader = YamlWorkbookReader.builder().build();
+    List<Node> nodes = reader.fromWorkbook(workbook);
+
+    assertEquals(1, nodes.size());
+    assertTrue(nodes.get(0) instanceof MappingNode);
+
+    MappingNode root = (MappingNode) nodes.get(0);
+    assertEquals(1, root.getValue().size()); // database
+
+    // database: # main database config
+    NodeTuple databaseTuple = root.getValue().get(0);
+    assertEquals("database", getScalarValue(databaseTuple.getKeyNode()));
+    // Block comment preserved: "# This is a configuration file"
+    assertNotNull(databaseTuple.getKeyNode().getBlockComments());
+    assertFalse(databaseTuple.getKeyNode().getBlockComments().isEmpty());
+    // Key inline comment preserved: "# main database config"
+    assertNotNull(databaseTuple.getKeyNode().getInLineComments());
+    assertFalse(databaseTuple.getKeyNode().getInLineComments().isEmpty());
+    assertTrue(databaseTuple.getValueNode() instanceof MappingNode);
+
+    MappingNode database = (MappingNode) databaseTuple.getValueNode();
+    assertEquals(7, database.getValue().size()); // host, port, username, password, connection, replicas, allowed_ips
+
+    // host: # server address localhost # primary host
+    NodeTuple hostTuple = database.getValue().get(0);
+    assertEquals("host", getScalarValue(hostTuple.getKeyNode()));
+    // Key inline comment: "# server address"
+    assertNotNull(hostTuple.getKeyNode().getInLineComments());
+    assertFalse(hostTuple.getKeyNode().getInLineComments().isEmpty());
+    assertEquals("localhost", getScalarValue(hostTuple.getValueNode()));
+    // Value inline comment: "# primary host"
+    assertNotNull(hostTuple.getValueNode().getInLineComments());
+    assertFalse(hostTuple.getValueNode().getInLineComments().isEmpty());
+
+    // port: 5432 # default PostgreSQL port
+    NodeTuple portTuple = database.getValue().get(1);
+    assertEquals("port", getScalarValue(portTuple.getKeyNode()));
+    assertEquals("5432", getScalarValue(portTuple.getValueNode()));
+    assertNotNull(portTuple.getValueNode().getInLineComments());
+
+    // username: admin (no inline comment)
+    NodeTuple usernameTuple = database.getValue().get(2);
+    assertEquals("username", getScalarValue(usernameTuple.getKeyNode()));
+    assertEquals("admin", getScalarValue(usernameTuple.getValueNode()));
+
+    // password: secret # change in production
+    NodeTuple passwordTuple = database.getValue().get(3);
+    assertEquals("password", getScalarValue(passwordTuple.getKeyNode()));
+    assertEquals("secret", getScalarValue(passwordTuple.getValueNode()));
+    assertNotNull(passwordTuple.getValueNode().getInLineComments());
+
+    // connection: # connection pool settings
+    NodeTuple connectionTuple = database.getValue().get(4);
+    assertEquals("connection", getScalarValue(connectionTuple.getKeyNode()));
+    // Key inline comment: "# connection pool settings"
+    assertNotNull(connectionTuple.getKeyNode().getInLineComments());
+    assertTrue(connectionTuple.getValueNode() instanceof MappingNode);
+
+    MappingNode connection = (MappingNode) connectionTuple.getValueNode();
+    assertEquals(2, connection.getValue().size()); // pool_size, timeout
+
+    // pool_size: # max connections 10
+    NodeTuple poolSizeTuple = connection.getValue().get(0);
+    assertEquals("pool_size", getScalarValue(poolSizeTuple.getKeyNode()));
+    assertNotNull(poolSizeTuple.getKeyNode().getInLineComments());
+    assertEquals("10", getScalarValue(poolSizeTuple.getValueNode()));
+
+    // timeout: # in seconds 30 # 30 seconds (key inline + value + value inline)
+    NodeTuple timeoutTuple = connection.getValue().get(1);
+    assertEquals("timeout", getScalarValue(timeoutTuple.getKeyNode()));
+    assertNotNull(timeoutTuple.getKeyNode().getInLineComments());
+    assertEquals("30", getScalarValue(timeoutTuple.getValueNode()));
+    assertNotNull(timeoutTuple.getValueNode().getInLineComments());
+    assertFalse(timeoutTuple.getValueNode().getInLineComments().isEmpty());
+
+    // replicas: # read replicas
+    NodeTuple replicasTuple = database.getValue().get(5);
+    assertEquals("replicas", getScalarValue(replicasTuple.getKeyNode()));
+    assertNotNull(replicasTuple.getKeyNode().getInLineComments());
+    assertTrue(replicasTuple.getValueNode() instanceof SequenceNode);
+
+    SequenceNode replicas = (SequenceNode) replicasTuple.getValueNode();
+    assertEquals(2, replicas.getValue().size());
+
+    // First replica: host: replica1.local # first replica
+    assertTrue(replicas.getValue().get(0) instanceof MappingNode);
+    MappingNode replica1 = (MappingNode) replicas.getValue().get(0);
+    assertEquals("host", getScalarValue(replica1.getValue().get(0).getKeyNode()));
+    assertEquals("replica1.local", getScalarValue(replica1.getValue().get(0).getValueNode()));
+    assertNotNull(replica1.getValue().get(0).getValueNode().getInLineComments());
+
+    // Second replica: host: # second replica address replica2.local
+    assertTrue(replicas.getValue().get(1) instanceof MappingNode);
+    MappingNode replica2 = (MappingNode) replicas.getValue().get(1);
+    assertEquals("host", getScalarValue(replica2.getValue().get(0).getKeyNode()));
+    // Key inline comment on host
+    assertNotNull(replica2.getValue().get(0).getKeyNode().getInLineComments());
+    assertEquals("replica2.local", getScalarValue(replica2.getValue().get(0).getValueNode()));
+
+    // allowed_ips: # whitelist
+    NodeTuple allowedIpsTuple = database.getValue().get(6);
+    assertEquals("allowed_ips", getScalarValue(allowedIpsTuple.getKeyNode()));
+    assertNotNull(allowedIpsTuple.getKeyNode().getInLineComments());
+    assertTrue(allowedIpsTuple.getValueNode() instanceof SequenceNode);
+
+    SequenceNode allowedIps = (SequenceNode) allowedIpsTuple.getValueNode();
+    assertEquals(3, allowedIps.getValue().size());
+
+    // - 192.168.1.1 # main server
+    assertEquals("192.168.1.1", getScalarValue(allowedIps.getValue().get(0)));
+    assertNotNull(allowedIps.getValue().get(0).getInLineComments());
+
+    // - 192.168.1.2 # backup server
+    assertEquals("192.168.1.2", getScalarValue(allowedIps.getValue().get(1)));
+    assertNotNull(allowedIps.getValue().get(1).getInLineComments());
+
+    // # internal network (block comment) - 10.0.0.1
+    assertEquals("10.0.0.1", getScalarValue(allowedIps.getValue().get(2)));
+    assertNotNull(allowedIps.getValue().get(2).getBlockComments());
+    assertFalse(allowedIps.getValue().get(2).getBlockComments().isEmpty());
 
     workbook.close();
   }

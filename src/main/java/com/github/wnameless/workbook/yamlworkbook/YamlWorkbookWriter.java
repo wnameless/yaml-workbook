@@ -116,10 +116,13 @@ public class YamlWorkbookWriter {
         keyCell.setCellValue(scalarKey.getValue());
 
         if (valueNode instanceof ScalarNode scalarValue) {
-          Cell valueCell = row.createCell(cellIndex + 1);
+          int nextCellIndex = cellIndex + 1;
+          nextCellIndex = writeInlineComments(keyNode.getInLineComments(), row, nextCellIndex);
+          Cell valueCell = row.createCell(nextCellIndex);
           valueCell.setCellValue(scalarValue.getValue());
-          writeInlineComments(valueNode.getInLineComments(), row, cellIndex + 2);
+          writeInlineComments(valueNode.getInLineComments(), row, nextCellIndex + 1);
         } else {
+          writeInlineComments(keyNode.getInLineComments(), row, cellIndex + 1);
           traverseAndPrintNode(valueNode, sheet, indentLevel + 1);
         }
       } else {
@@ -165,9 +168,9 @@ public class YamlWorkbookWriter {
     }
   }
 
-  private void writeInlineComments(List<CommentLine> comments, Row row, int startCellIndex) {
+  private int writeInlineComments(List<CommentLine> comments, Row row, int startCellIndex) {
     if (comments == null || comments.isEmpty()) {
-      return;
+      return startCellIndex;
     }
 
     int cellIndex = startCellIndex;
@@ -175,6 +178,7 @@ public class YamlWorkbookWriter {
       Cell cell = row.createCell(cellIndex++);
       cell.setCellValue(workbookSymbol.getCommentMark() + " " + comment.getValue().trim());
     }
+    return cellIndex;
   }
 
 }

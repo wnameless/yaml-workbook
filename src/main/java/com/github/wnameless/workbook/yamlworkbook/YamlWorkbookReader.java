@@ -172,19 +172,44 @@ public class YamlWorkbookReader {
         pendingComments.clear();
       }
 
-      // Check for inline value
-      String inlineValue = getCellValue(row, cellOffset + 1);
+      // Check for key inline comment and inline value
+      // Format can be: key | value | value_comment OR key | key_comment | value | value_comment
+      String secondCell = getCellValue(row, cellOffset + 1);
       Node valueNode;
 
-      if (inlineValue != null) {
-        // Inline scalar value
-        valueNode = new ScalarNode(Tag.STR, inlineValue, null, null, ScalarStyle.PLAIN);
-        // Check for inline comments
-        List<CommentLine> inlineComments = parseInlineComments(row, cellOffset + 2);
-        if (!inlineComments.isEmpty()) {
-          valueNode.setInLineComments(inlineComments);
+      if (secondCell != null) {
+        int valueOffset;
+        if (isComment(secondCell)) {
+          // Second cell is a key inline comment: key | key_comment | value | value_comment
+          List<CommentLine> keyInlineComments = new ArrayList<>();
+          keyInlineComments.add(createInlineCommentLine(secondCell));
+          keyNode.setInLineComments(keyInlineComments);
+          valueOffset = cellOffset + 2;
+        } else {
+          // Second cell is the value: key | value | value_comment
+          valueOffset = cellOffset + 1;
         }
-        i++;
+
+        String inlineValue = getCellValue(row, valueOffset);
+        if (inlineValue != null) {
+          // Inline scalar value
+          valueNode = new ScalarNode(Tag.STR, inlineValue, null, null, ScalarStyle.PLAIN);
+          // Check for value inline comments
+          List<CommentLine> inlineComments = parseInlineComments(row, valueOffset + 1);
+          if (!inlineComments.isEmpty()) {
+            valueNode.setInLineComments(inlineComments);
+          }
+          i++;
+        } else {
+          // Key with key inline comment but nested content
+          int nestedStart = i + 1;
+          int nestedEnd = findNestedEnd(rows, indentLevel, nestedStart, endIdx);
+          valueNode = parseRows(rows, indentLevel + 1, nestedStart, nestedEnd);
+          if (valueNode == null) {
+            valueNode = new ScalarNode(Tag.STR, "", null, null, ScalarStyle.PLAIN);
+          }
+          i = nestedEnd;
+        }
       } else {
         // Nested content - find extent
         int nestedStart = i + 1;
@@ -337,6 +362,14 @@ public class YamlWorkbookReader {
       text = text.substring(workbookSymbol.getCommentMark().length()).trim();
     }
     return new CommentLine(null, null, " " + text, CommentType.BLOCK);
+  }
+
+  private CommentLine createInlineCommentLine(String commentValue) {
+    String text = commentValue;
+    if (text.startsWith(workbookSymbol.getCommentMark())) {
+      text = text.substring(workbookSymbol.getCommentMark().length()).trim();
+    }
+    return new CommentLine(null, null, " " + text, CommentType.IN_LINE);
   }
 
   private List<CommentLine> parseInlineComments(Row row, int startCellIndex) {
