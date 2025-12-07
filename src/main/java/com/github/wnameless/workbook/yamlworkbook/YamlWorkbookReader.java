@@ -23,7 +23,7 @@ import lombok.Builder;
 public class YamlWorkbookReader {
 
   @Builder.Default
-  private PrintMode printMode = PrintMode.WORKBOOK_ORIENTED;
+  private PrintMode printMode = PrintMode.YAML_ORIENTED;
   @Builder.Default
   private WorkbookSyntax workbookSyntax = WorkbookSyntax.DEFAULT;
   @Builder.Default

@@ -22,7 +22,9 @@ import lombok.Builder;
 public class YamlWorkbookWriter {
 
   @Builder.Default
-  private PrintMode printMode = PrintMode.WORKBOOK_ORIENTED;
+  private PrintMode printMode = PrintMode.YAML_ORIENTED;
+  @Builder.Default
+  private DisplayModeConfig displayModeConfig = DisplayModeConfig.DEFAULT;
   @Builder.Default
   private WorkbookSyntax workbookSyntax = WorkbookSyntax.DEFAULT;
   @Builder.Default
@@ -66,9 +68,24 @@ public class YamlWorkbookWriter {
       workbook.createSheet(sheetNameStrategy.apply(workbook.getNumberOfSheets()));
     }
     var sheet = workbook.getSheetAt(sheetIdx);
+
+    // Handle document-level comments (before frontmatter)
+    if (isDisplayMode()) {
+      if (displayModeConfig.getDocumentComment() == CommentVisibility.COMMENT) {
+        writeDocumentComments(node, sheet);
+      }
+    } else {
+      writeDocumentComments(node, sheet);
+    }
+
     writeFrontmatter(sheet);
-    traverseAndPrintNode(node, sheet, 0);
+    traverseAndPrintNodeWithoutBlockComments(node, sheet, 0);
     nodeIdx++;
+  }
+
+  private void writeDocumentComments(Node node, Sheet sheet) {
+    // Document comments are the block comments of the root node
+    writeComments(node.getBlockComments(), sheet, 0);
   }
 
   private void writeFrontmatter(Sheet sheet) {
@@ -77,12 +94,11 @@ public class YamlWorkbookWriter {
     cell.setCellValue(workbookSyntax.getFrontmatter());
   }
 
-  private void traverseAndPrintNode(Node node, Sheet sheet, int indentLevel) {
+  private void traverseAndPrintNodeWithoutBlockComments(Node node, Sheet sheet, int indentLevel) {
+    // Used for root node where block comments are handled as document comments
     if (node == null) {
       return;
     }
-
-    writeComments(node.getBlockComments(), sheet, indentLevel);
 
     if (node instanceof ScalarNode scalarNode) {
       traverseScalarNode(scalarNode, sheet, indentLevel);
@@ -93,6 +109,55 @@ public class YamlWorkbookWriter {
     }
 
     writeComments(node.getEndComments(), sheet, indentLevel);
+  }
+
+  private void traverseAndPrintNode(Node node, Sheet sheet, int indentLevel) {
+    if (node == null) {
+      return;
+    }
+
+    // Handle block comments based on node type (OBJECT/ARRAY/VALUE comments)
+    if (isDisplayMode()) {
+      if (node instanceof MappingNode) {
+        writeBlockCommentsInDisplayModeReplaceable(node.getBlockComments(), sheet, indentLevel,
+            displayModeConfig.getObjectComment());
+      } else if (node instanceof SequenceNode) {
+        writeBlockCommentsInDisplayModeReplaceable(node.getBlockComments(), sheet, indentLevel,
+            displayModeConfig.getArrayComment());
+      } else {
+        writeComments(node.getBlockComments(), sheet, indentLevel);
+      }
+    } else {
+      writeComments(node.getBlockComments(), sheet, indentLevel);
+    }
+
+    if (node instanceof ScalarNode scalarNode) {
+      traverseScalarNode(scalarNode, sheet, indentLevel);
+    } else if (node instanceof MappingNode mappingNode) {
+      traverseMappingNode(mappingNode, sheet, indentLevel);
+    } else if (node instanceof SequenceNode sequenceNode) {
+      traverseSequenceNode(sequenceNode, sheet, indentLevel);
+    }
+
+    writeComments(node.getEndComments(), sheet, indentLevel);
+  }
+
+  private void writeBlockCommentsInDisplayModeReplaceable(List<CommentLine> comments, Sheet sheet,
+      int indentLevel, CommentDisplayOption option) {
+    if (comments == null || comments.isEmpty()) {
+      return;
+    }
+    switch (option) {
+      case DISPLAY_NAME -> {
+        // For OBJECT/ARRAY, DISPLAY_NAME shows the comment as a header row
+        Row row = sheet.createRow(sheet.getLastRowNum() + 1);
+        int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
+        Cell cell = row.createCell(cellIndex);
+        cell.setCellValue(extractCommentText(comments));
+      }
+      case HIDDEN -> { /* skip comments entirely */ }
+      case COMMENT -> writeComments(comments, sheet, indentLevel);
+    }
   }
 
   private void traverseScalarNode(ScalarNode node, Sheet sheet, int indentLevel) {
@@ -107,22 +172,78 @@ public class YamlWorkbookWriter {
       Node keyNode = tuple.getKeyNode();
       Node valueNode = tuple.getValueNode();
 
-      writeComments(keyNode.getBlockComments(), sheet, indentLevel);
+      // Handle block comments (KEY_VALUE_PAIR comment type)
+      if (isDisplayMode()) {
+        writeBlockCommentsInDisplayMode(keyNode.getBlockComments(), sheet, indentLevel,
+            displayModeConfig.getKeyValuePairComment());
+      } else {
+        writeComments(keyNode.getBlockComments(), sheet, indentLevel);
+      }
 
       if (keyNode instanceof ScalarNode scalarKey) {
         Row row = sheet.createRow(sheet.getLastRowNum() + 1);
         int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
         Cell keyCell = row.createCell(cellIndex);
-        keyCell.setCellValue(scalarKey.getValue());
+
+        // Handle key display
+        String keyDisplayValue = scalarKey.getValue();
+        if (isDisplayMode()) {
+          String keyCommentText = extractCommentText(scalarKey.getInLineComments());
+          if (keyCommentText != null) {
+            switch (displayModeConfig.getKeyComment()) {
+              case DISPLAY_NAME -> keyDisplayValue = keyCommentText;
+              case HIDDEN -> { /* keep original */ }
+              case COMMENT -> { /* handled separately */ }
+            }
+          }
+        }
+        keyCell.setCellValue(keyDisplayValue);
 
         if (valueNode instanceof ScalarNode scalarValue) {
           int nextCellIndex = cellIndex + 1;
-          nextCellIndex = writeInlineComments(keyNode.getInLineComments(), row, nextCellIndex);
+
+          // Handle key inline comments
+          if (isDisplayMode()) {
+            if (displayModeConfig.getKeyComment() == CommentDisplayOption.COMMENT) {
+              nextCellIndex = writeInlineComments(keyNode.getInLineComments(), row, nextCellIndex);
+            }
+          } else {
+            nextCellIndex = writeInlineComments(keyNode.getInLineComments(), row, nextCellIndex);
+          }
+
           Cell valueCell = row.createCell(nextCellIndex);
-          valueCell.setCellValue(escapeValueIfNeeded(scalarValue.getValue()));
-          writeInlineComments(valueNode.getInLineComments(), row, nextCellIndex + 1);
+
+          // Handle value display
+          String valueDisplayValue = escapeValueIfNeeded(scalarValue.getValue());
+          if (isDisplayMode()) {
+            String valueCommentText = extractCommentText(scalarValue.getInLineComments());
+            if (valueCommentText != null) {
+              switch (displayModeConfig.getValueComment()) {
+                case DISPLAY_NAME -> valueDisplayValue = valueCommentText;
+                case HIDDEN -> { /* keep original */ }
+                case COMMENT -> { /* handled separately */ }
+              }
+            }
+          }
+          valueCell.setCellValue(valueDisplayValue);
+
+          // Handle value inline comments
+          if (isDisplayMode()) {
+            if (displayModeConfig.getValueComment() == CommentDisplayOption.COMMENT) {
+              writeInlineComments(valueNode.getInLineComments(), row, nextCellIndex + 1);
+            }
+          } else {
+            writeInlineComments(valueNode.getInLineComments(), row, nextCellIndex + 1);
+          }
         } else {
-          writeInlineComments(keyNode.getInLineComments(), row, cellIndex + 1);
+          // Handle key inline comments for nested value
+          if (isDisplayMode()) {
+            if (displayModeConfig.getKeyComment() == CommentDisplayOption.COMMENT) {
+              writeInlineComments(keyNode.getInLineComments(), row, cellIndex + 1);
+            }
+          } else {
+            writeInlineComments(keyNode.getInLineComments(), row, cellIndex + 1);
+          }
           traverseAndPrintNode(valueNode, sheet, indentLevel + 1);
         }
       } else {
@@ -134,9 +255,24 @@ public class YamlWorkbookWriter {
     }
   }
 
+  private void writeBlockCommentsInDisplayMode(List<CommentLine> comments, Sheet sheet,
+      int indentLevel, CommentVisibility visibility) {
+    if (comments == null || comments.isEmpty() || visibility == CommentVisibility.HIDDEN) {
+      return;
+    }
+    // COMMENT visibility - write as regular comments
+    writeComments(comments, sheet, indentLevel);
+  }
+
   private void traverseSequenceNode(SequenceNode node, Sheet sheet, int indentLevel) {
     for (Node item : node.getValue()) {
-      writeComments(item.getBlockComments(), sheet, indentLevel);
+      // Handle item block comments
+      if (isDisplayMode()) {
+        writeBlockCommentsInDisplayMode(item.getBlockComments(), sheet, indentLevel,
+            displayModeConfig.getItemComment());
+      } else {
+        writeComments(item.getBlockComments(), sheet, indentLevel);
+      }
 
       Row row = sheet.createRow(sheet.getLastRowNum() + 1);
       int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
@@ -146,7 +282,15 @@ public class YamlWorkbookWriter {
       if (item instanceof ScalarNode scalarItem) {
         Cell valueCell = row.createCell(cellIndex + 1);
         valueCell.setCellValue(escapeValueIfNeeded(scalarItem.getValue()));
-        writeInlineComments(item.getInLineComments(), row, cellIndex + 2);
+
+        // Handle item inline comments
+        if (isDisplayMode()) {
+          if (displayModeConfig.getItemComment() == CommentVisibility.COMMENT) {
+            writeInlineComments(item.getInLineComments(), row, cellIndex + 2);
+          }
+        } else {
+          writeInlineComments(item.getInLineComments(), row, cellIndex + 2);
+        }
       } else {
         traverseAndPrintNode(item, sheet, indentLevel + 1);
       }
@@ -191,6 +335,18 @@ public class YamlWorkbookWriter {
       return workbookSyntax.getValueEscapeMark() + value;
     }
     return value;
+  }
+
+  private boolean isDisplayMode() {
+    return printMode == PrintMode.WORKBOOK_DISPLAY;
+  }
+
+  private String extractCommentText(List<CommentLine> comments) {
+    if (comments == null || comments.isEmpty()) {
+      return null;
+    }
+    // Use the first comment's text as display name
+    return comments.get(0).getValue().trim();
   }
 
 }

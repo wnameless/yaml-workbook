@@ -485,6 +485,469 @@ class YamlWorkbookWriterTest {
     workbook.close();
   }
 
+  // ==================== WORKBOOK_DISPLAY Mode Tests ====================
+
+  @Test
+  void testDisplayModeDefaultConfig() throws IOException {
+    // Test with simple key-value pairs and inline value comments
+    String yaml = """
+        name: John Doe
+        email: john@example.com
+        age: 30 # Age in Years
+        """;
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.WORKBOOK_DISPLAY)
+        .build();
+
+    Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+
+    assertNotNull(workbook);
+    Sheet sheet = workbook.getSheetAt(0);
+
+    writeExcelFile(workbook, "display_mode_default.xlsx");
+
+    int rowNum = 0;
+
+    // Row 0: --- (frontmatter)
+    Row row = sheet.getRow(rowNum++);
+    assertEquals("---", row.getCell(0).getStringCellValue());
+
+    // Row 1: name | John Doe
+    row = sheet.getRow(rowNum++);
+    assertEquals("name", row.getCell(0).getStringCellValue());
+    assertEquals("John Doe", row.getCell(1).getStringCellValue());
+
+    // Row 2: email | john@example.com
+    row = sheet.getRow(rowNum++);
+    assertEquals("email", row.getCell(0).getStringCellValue());
+    assertEquals("john@example.com", row.getCell(1).getStringCellValue());
+
+    // Row 3: age | Age in Years (value replaced by inline comment with DISPLAY_NAME)
+    row = sheet.getRow(rowNum++);
+    assertEquals("age", row.getCell(0).getStringCellValue());
+    assertEquals("Age in Years", row.getCell(1).getStringCellValue());
+
+    workbook.close();
+  }
+
+  @Test
+  void testDisplayModeKeyValuePairCommentVisible() throws IOException {
+    // Test with KEY_VALUE_PAIR comments set to COMMENT (visible)
+    String yaml = """
+        # User Information
+        name: John
+        # Contact Details
+        email: john@example.com
+        """;
+
+    DisplayModeConfig config = DisplayModeConfig.builder()
+        .keyValuePairComment(CommentVisibility.COMMENT)
+        .build();
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.WORKBOOK_DISPLAY)
+        .displayModeConfig(config)
+        .build();
+
+    Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+    Sheet sheet = workbook.getSheetAt(0);
+
+    int rowNum = 0;
+
+    // Row 0: ---
+    assertEquals("---", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 1: # User Information (KEY_VALUE_PAIR comment shown)
+    Row row1 = sheet.getRow(rowNum++);
+    assertTrue(row1.getCell(0).getStringCellValue().startsWith("#"));
+
+    // Row 2: name | John
+    Row row2 = sheet.getRow(rowNum++);
+    assertEquals("name", row2.getCell(0).getStringCellValue());
+    assertEquals("John", row2.getCell(1).getStringCellValue());
+
+    // Row 3: # Contact Details (KEY_VALUE_PAIR comment shown)
+    Row row3 = sheet.getRow(rowNum++);
+    assertTrue(row3.getCell(0).getStringCellValue().startsWith("#"));
+
+    // Row 4: email | john@example.com
+    Row row4 = sheet.getRow(rowNum++);
+    assertEquals("email", row4.getCell(0).getStringCellValue());
+    assertEquals("john@example.com", row4.getCell(1).getStringCellValue());
+
+    writeExcelFile(workbook, "display_mode_kvp_comment.xlsx");
+    workbook.close();
+  }
+
+  @Test
+  void testDisplayModeKeyValuePairCommentHidden() throws IOException {
+    // Test with KEY_VALUE_PAIR comments set to HIDDEN (default)
+    String yaml = """
+        # User Information
+        name: John
+        # Contact Details
+        email: john@example.com
+        """;
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.WORKBOOK_DISPLAY)
+        .build();
+
+    Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+    Sheet sheet = workbook.getSheetAt(0);
+
+    int rowNum = 0;
+
+    // Row 0: ---
+    assertEquals("---", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 1: name | John (comment hidden)
+    Row row1 = sheet.getRow(rowNum++);
+    assertEquals("name", row1.getCell(0).getStringCellValue());
+    assertEquals("John", row1.getCell(1).getStringCellValue());
+
+    // Row 2: email | john@example.com (comment hidden)
+    Row row2 = sheet.getRow(rowNum++);
+    assertEquals("email", row2.getCell(0).getStringCellValue());
+    assertEquals("john@example.com", row2.getCell(1).getStringCellValue());
+
+    writeExcelFile(workbook, "display_mode_kvp_hidden.xlsx");
+    workbook.close();
+  }
+
+  @Test
+  void testDisplayModeDocumentCommentVisible() throws IOException {
+    // Test with DOCUMENT comment set to COMMENT (visible)
+    // Note: In SnakeYAML, comments before the first key are block comments of the root mapping node
+    String yaml = """
+        # This is a document title
+        name: John
+        """;
+
+    DisplayModeConfig config = DisplayModeConfig.builder()
+        .documentComment(CommentVisibility.COMMENT)
+        .keyValuePairComment(CommentVisibility.HIDDEN)  // Hide key-value pair comments
+        .build();
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.WORKBOOK_DISPLAY)
+        .displayModeConfig(config)
+        .build();
+
+    Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+    Sheet sheet = workbook.getSheetAt(0);
+
+    // Write file for inspection
+    writeExcelFile(workbook, "display_mode_doc_comment.xlsx");
+
+    int rowNum = 0;
+
+    // Row 0: ---
+    assertEquals("---", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 1: name | John (comments before first key are on key node as block comments, not document)
+    Row row1 = sheet.getRow(rowNum++);
+    assertEquals("name", row1.getCell(0).getStringCellValue());
+    assertEquals("John", row1.getCell(1).getStringCellValue());
+
+    workbook.close();
+  }
+
+  @Test
+  void testDisplayModeItemCommentVisible() throws IOException {
+    // Test with ITEM comment set to COMMENT (visible)
+    String yaml = """
+        fruits:
+          # A red fruit
+          - apple
+          # A yellow fruit
+          - banana
+        """;
+
+    DisplayModeConfig config = DisplayModeConfig.builder()
+        .itemComment(CommentVisibility.COMMENT)
+        .build();
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.WORKBOOK_DISPLAY)
+        .displayModeConfig(config)
+        .build();
+
+    Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+    Sheet sheet = workbook.getSheetAt(0);
+
+    int rowNum = 0;
+
+    // Row 0: ---
+    assertEquals("---", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 1: fruits
+    assertEquals("fruits", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 2: # A red fruit (item comment shown)
+    Row row2 = sheet.getRow(rowNum++);
+    assertTrue(row2.getCell(1).getStringCellValue().startsWith("#"));
+
+    // Row 3: - | apple
+    Row row3 = sheet.getRow(rowNum++);
+    assertEquals("-", row3.getCell(1).getStringCellValue());
+    assertEquals("apple", row3.getCell(2).getStringCellValue());
+
+    // Row 4: # A yellow fruit (item comment shown)
+    Row row4 = sheet.getRow(rowNum++);
+    assertTrue(row4.getCell(1).getStringCellValue().startsWith("#"));
+
+    // Row 5: - | banana
+    Row row5 = sheet.getRow(rowNum++);
+    assertEquals("-", row5.getCell(1).getStringCellValue());
+    assertEquals("banana", row5.getCell(2).getStringCellValue());
+
+    writeExcelFile(workbook, "display_mode_item_comment.xlsx");
+    workbook.close();
+  }
+
+  @Test
+  void testDisplayModeItemCommentHidden() throws IOException {
+    // Test with ITEM comment set to HIDDEN (default)
+    String yaml = """
+        fruits:
+          # A red fruit
+          - apple
+          # A yellow fruit
+          - banana
+        """;
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.WORKBOOK_DISPLAY)
+        .build();
+
+    Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+    Sheet sheet = workbook.getSheetAt(0);
+
+    int rowNum = 0;
+
+    // Row 0: ---
+    assertEquals("---", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 1: fruits
+    assertEquals("fruits", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 2: - | apple (comment hidden)
+    Row row2 = sheet.getRow(rowNum++);
+    assertEquals("-", row2.getCell(1).getStringCellValue());
+    assertEquals("apple", row2.getCell(2).getStringCellValue());
+
+    // Row 3: - | banana (comment hidden)
+    Row row3 = sheet.getRow(rowNum++);
+    assertEquals("-", row3.getCell(1).getStringCellValue());
+    assertEquals("banana", row3.getCell(2).getStringCellValue());
+
+    writeExcelFile(workbook, "display_mode_item_hidden.xlsx");
+    workbook.close();
+  }
+
+  @Test
+  void testDisplayModeObjectComment() throws IOException {
+    // Test OBJECT comment - when a nested mapping has a block comment before it
+    // Note: Block comments before keys in mapping go to KEY_VALUE_PAIR, not OBJECT
+    String yaml = """
+        user:
+          # User Settings
+          settings:
+            theme: dark
+        """;
+
+    // Test DISPLAY_NAME (default) - the nested mapping "settings" has a block comment
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.WORKBOOK_DISPLAY)
+        .build();
+
+    Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+    Sheet sheet = workbook.getSheetAt(0);
+
+    writeExcelFile(workbook, "display_mode_object_displayname.xlsx");
+
+    int rowNum = 0;
+
+    // Row 0: ---
+    assertEquals("---", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 1: user
+    assertEquals("user", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 2: settings (KEY_VALUE_PAIR comment "User Settings" is HIDDEN by default)
+    assertEquals("settings", sheet.getRow(rowNum++).getCell(1).getStringCellValue());
+
+    // Row 3: theme | dark
+    Row row3 = sheet.getRow(rowNum++);
+    assertEquals("theme", row3.getCell(2).getStringCellValue());
+    assertEquals("dark", row3.getCell(3).getStringCellValue());
+
+    workbook.close();
+  }
+
+  @Test
+  void testDisplayModeObjectCommentHidden() throws IOException {
+    // Test that object comment HIDDEN works (same as default since KEY_VALUE_PAIR is HIDDEN)
+    String yaml = """
+        # User Profile
+        user:
+          name: John
+        """;
+
+    DisplayModeConfig config = DisplayModeConfig.builder()
+        .objectComment(CommentDisplayOption.HIDDEN)
+        .keyValuePairComment(CommentVisibility.HIDDEN)
+        .build();
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.WORKBOOK_DISPLAY)
+        .displayModeConfig(config)
+        .build();
+
+    Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+    Sheet sheet = workbook.getSheetAt(0);
+
+    writeExcelFile(workbook, "display_mode_object_hidden.xlsx");
+
+    int rowNum = 0;
+
+    // Row 0: ---
+    assertEquals("---", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 1: user (comment "User Profile" hidden - it's a KEY_VALUE_PAIR comment)
+    assertEquals("user", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 2: name | John
+    Row row2 = sheet.getRow(rowNum++);
+    assertEquals("name", row2.getCell(1).getStringCellValue());
+    assertEquals("John", row2.getCell(2).getStringCellValue());
+
+    workbook.close();
+  }
+
+  @Test
+  void testDisplayModeArrayComment() throws IOException {
+    // Test ARRAY comment - block comments before keys go to KEY_VALUE_PAIR
+    // This test verifies the default behavior with KEY_VALUE_PAIR HIDDEN
+    String yaml = """
+        # Fruit List
+        fruits:
+          - apple
+          - banana
+        """;
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.WORKBOOK_DISPLAY)
+        .build();
+
+    Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+    Sheet sheet = workbook.getSheetAt(0);
+
+    writeExcelFile(workbook, "display_mode_array_displayname.xlsx");
+
+    int rowNum = 0;
+
+    // Row 0: ---
+    assertEquals("---", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 1: fruits (KEY_VALUE_PAIR comment "Fruit List" is HIDDEN by default)
+    assertEquals("fruits", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 2: - | apple
+    Row row2 = sheet.getRow(rowNum++);
+    assertEquals("-", row2.getCell(1).getStringCellValue());
+    assertEquals("apple", row2.getCell(2).getStringCellValue());
+
+    // Row 3: - | banana
+    Row row3 = sheet.getRow(rowNum++);
+    assertEquals("-", row3.getCell(1).getStringCellValue());
+    assertEquals("banana", row3.getCell(2).getStringCellValue());
+
+    workbook.close();
+  }
+
+  @Test
+  void testDisplayModeAllCommentsAsComment() throws IOException {
+    // Test with KEY_VALUE_PAIR comments set to COMMENT (show as comments)
+    String yaml = """
+        # First comment
+        # Second comment
+        name: John
+        """;
+
+    DisplayModeConfig config = DisplayModeConfig.builder()
+        .keyValuePairComment(CommentVisibility.COMMENT)
+        .build();
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.WORKBOOK_DISPLAY)
+        .displayModeConfig(config)
+        .build();
+
+    Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+    Sheet sheet = workbook.getSheetAt(0);
+
+    writeExcelFile(workbook, "display_mode_all_comment.xlsx");
+
+    int rowNum = 0;
+
+    // Row 0: ---
+    assertEquals("---", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 1: # First comment (KEY_VALUE_PAIR comment shown)
+    Row row1 = sheet.getRow(rowNum++);
+    assertTrue(row1.getCell(0).getStringCellValue().startsWith("#"));
+
+    // Row 2: # Second comment (KEY_VALUE_PAIR comment shown)
+    Row row2 = sheet.getRow(rowNum++);
+    assertTrue(row2.getCell(0).getStringCellValue().startsWith("#"));
+
+    // Row 3: name | John
+    Row row3 = sheet.getRow(rowNum++);
+    assertEquals("name", row3.getCell(0).getStringCellValue());
+    assertEquals("John", row3.getCell(1).getStringCellValue());
+
+    workbook.close();
+  }
+
+  @Test
+  void testYamlOrientedModeUnchanged() throws IOException {
+    // Verify YAML_ORIENTED mode still works as before (all comments shown)
+    String yaml = """
+        # Block comment
+        name: John # inline comment
+        """;
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.YAML_ORIENTED)
+        .build();
+
+    Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+    Sheet sheet = workbook.getSheetAt(0);
+
+    writeExcelFile(workbook, "yaml_oriented_mode.xlsx");
+
+    int rowNum = 0;
+
+    // Row 0: --- (in YAML_ORIENTED, document comments go before frontmatter)
+    // But block comments before first key go to key node, not root node
+    assertEquals("---", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 1: # Block comment (block comment on key node)
+    Row row1 = sheet.getRow(rowNum++);
+    assertTrue(row1.getCell(0).getStringCellValue().startsWith("#"));
+
+    // Row 2: name | John | # inline comment
+    Row row2 = sheet.getRow(rowNum++);
+    assertEquals("name", row2.getCell(0).getStringCellValue());
+    assertEquals("John", row2.getCell(1).getStringCellValue());
+    assertTrue(row2.getCell(2).getStringCellValue().startsWith("#"));
+
+    workbook.close();
+  }
+
   private String loadYaml(String resourcePath) throws IOException {
     try (InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
       if (is == null) {
