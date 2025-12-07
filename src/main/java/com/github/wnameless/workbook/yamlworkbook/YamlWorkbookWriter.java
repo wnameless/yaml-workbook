@@ -22,13 +22,13 @@ import lombok.Builder;
 public class YamlWorkbookWriter {
 
   @Builder.Default
-  private WorkbookPrintMode workbookPrintMode = WorkbookPrintMode.WORKBOOK_PRONE;
+  private PrintMode printMode = PrintMode.WORKBOOK_ORIENTED;
   @Builder.Default
-  private WorkbookSymbol workbookSymbol = WorkbookSymbol.DEFAULT;
+  private WorkbookSyntax workbookSyntax = WorkbookSyntax.DEFAULT;
   @Builder.Default
-  private YamlNodeSheetClassifier yamlNodeSheetClassifier = YamlNodeSheetClassifier.DEFAULT;
+  private NodeToSheetMapper nodeToSheetMapper = NodeToSheetMapper.DEFAULT;
   @Builder.Default
-  private WorkbookSheetNameStrategy workbookSheetNameStrategy = WorkbookSheetNameStrategy.DEFAULT;
+  private SheetNameStrategy sheetNameStrategy = SheetNameStrategy.DEFAULT;
 
   public Workbook toWorkbook(StringReader yamlContent, StringReader... yamlContents) {
     var workbook = new XSSFWorkbook();
@@ -46,7 +46,7 @@ public class YamlWorkbookWriter {
     processNodes(nodeIters, workbook);
 
     if (workbook.getNumberOfSheets() == 0) {
-      workbook.createSheet(workbookSheetNameStrategy.apply(0));
+      workbook.createSheet(sheetNameStrategy.apply(0));
     }
     return workbook;
   }
@@ -61,9 +61,9 @@ public class YamlWorkbookWriter {
   }
 
   private void processNode(Node node, Workbook workbook, int nodeIdx) {
-    var sheetIdx = yamlNodeSheetClassifier.apply(node, nodeIdx);
+    var sheetIdx = nodeToSheetMapper.apply(node, nodeIdx);
     while (workbook.getNumberOfSheets() <= sheetIdx) {
-      workbook.createSheet(workbookSheetNameStrategy.apply(workbook.getNumberOfSheets()));
+      workbook.createSheet(sheetNameStrategy.apply(workbook.getNumberOfSheets()));
     }
     var sheet = workbook.getSheetAt(sheetIdx);
     writeFrontmatter(sheet);
@@ -74,7 +74,7 @@ public class YamlWorkbookWriter {
   private void writeFrontmatter(Sheet sheet) {
     Row row = sheet.createRow(sheet.getLastRowNum() + 1);
     Cell cell = row.createCell(0);
-    cell.setCellValue(workbookSymbol.getFrontmatter());
+    cell.setCellValue(workbookSyntax.getFrontmatter());
   }
 
   private void traverseAndPrintNode(Node node, Sheet sheet, int indentLevel) {
@@ -97,7 +97,7 @@ public class YamlWorkbookWriter {
 
   private void traverseScalarNode(ScalarNode node, Sheet sheet, int indentLevel) {
     Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-    int cellIndex = indentLevel * workbookSymbol.getIndentationCellNum();
+    int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
     Cell cell = row.createCell(cellIndex);
     cell.setCellValue(escapeValueIfNeeded(node.getValue()));
   }
@@ -111,7 +111,7 @@ public class YamlWorkbookWriter {
 
       if (keyNode instanceof ScalarNode scalarKey) {
         Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-        int cellIndex = indentLevel * workbookSymbol.getIndentationCellNum();
+        int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
         Cell keyCell = row.createCell(cellIndex);
         keyCell.setCellValue(scalarKey.getValue());
 
@@ -139,9 +139,9 @@ public class YamlWorkbookWriter {
       writeComments(item.getBlockComments(), sheet, indentLevel);
 
       Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-      int cellIndex = indentLevel * workbookSymbol.getIndentationCellNum();
+      int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
       Cell itemMarkCell = row.createCell(cellIndex);
-      itemMarkCell.setCellValue(workbookSymbol.getItemMark());
+      itemMarkCell.setCellValue(workbookSyntax.getItemMark());
 
       if (item instanceof ScalarNode scalarItem) {
         Cell valueCell = row.createCell(cellIndex + 1);
@@ -162,9 +162,9 @@ public class YamlWorkbookWriter {
 
     for (CommentLine comment : comments) {
       Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-      int cellIndex = indentLevel * workbookSymbol.getIndentationCellNum();
+      int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
       Cell cell = row.createCell(cellIndex);
-      cell.setCellValue(workbookSymbol.getCommentMark() + " " + comment.getValue().trim());
+      cell.setCellValue(workbookSyntax.getCommentMark() + " " + comment.getValue().trim());
     }
   }
 
@@ -176,7 +176,7 @@ public class YamlWorkbookWriter {
     int cellIndex = startCellIndex;
     for (CommentLine comment : comments) {
       Cell cell = row.createCell(cellIndex++);
-      cell.setCellValue(workbookSymbol.getCommentMark() + " " + comment.getValue().trim());
+      cell.setCellValue(workbookSyntax.getCommentMark() + " " + comment.getValue().trim());
     }
     return cellIndex;
   }
@@ -186,9 +186,9 @@ public class YamlWorkbookWriter {
       return null;
     }
     // Only escape if value STARTS with comment mark or escape mark
-    if (value.startsWith(workbookSymbol.getCommentMark())
-        || value.startsWith(workbookSymbol.getValueEscapeMark())) {
-      return workbookSymbol.getValueEscapeMark() + value;
+    if (value.startsWith(workbookSyntax.getCommentMark())
+        || value.startsWith(workbookSyntax.getValueEscapeMark())) {
+      return workbookSyntax.getValueEscapeMark() + value;
     }
     return value;
   }

@@ -1,6 +1,6 @@
 package com.github.wnameless.workbook.yamlworkbook;
 
-public final class DefaultWorkbookSheetNameStrategy implements WorkbookSheetNameStrategy {
+public final class DefaultSheetNameStrategy implements SheetNameStrategy {
 
   @Override
   public String apply(Integer t) {

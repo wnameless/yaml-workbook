@@ -1,8 +1,8 @@
 package com.github.wnameless.workbook.yamlworkbook;
 
-public interface WorkbookSymbol {
+public interface WorkbookSyntax {
 
-  public static final WorkbookSymbol DEFAULT = new DefaultWorkbookSymbol();
+  public static final WorkbookSyntax DEFAULT = new DefaultWorkbookSyntax();
 
   String getFrontmatter();
 

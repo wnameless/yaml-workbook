@@ -2,7 +2,7 @@ package com.github.wnameless.workbook.yamlworkbook;
 
 import org.yaml.snakeyaml.nodes.Node;
 
-public final class DefaultYamlNodeClassifier implements YamlNodeSheetClassifier {
+public final class DefaultNodeToSheetMapper implements NodeToSheetMapper {
 
   @Override
   public Integer apply(Node t, Integer u) {

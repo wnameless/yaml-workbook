@@ -23,18 +23,18 @@ import lombok.Builder;
 public class YamlWorkbookReader {
 
   @Builder.Default
-  private WorkbookPrintMode workbookPrintMode = WorkbookPrintMode.WORKBOOK_PRONE;
+  private PrintMode printMode = PrintMode.WORKBOOK_ORIENTED;
   @Builder.Default
-  private WorkbookSymbol workbookSymbol = WorkbookSymbol.DEFAULT;
+  private WorkbookSyntax workbookSyntax = WorkbookSyntax.DEFAULT;
   @Builder.Default
-  private WorkbookSheetNameStrategy workbookSheetNameStrategy = WorkbookSheetNameStrategy.DEFAULT;
+  private SheetNameStrategy sheetNameStrategy = SheetNameStrategy.DEFAULT;
 
   public List<Node> fromWorkbook(Workbook workbook) {
     var nodeList = new ArrayList<Node>();
     if (workbook == null) return nodeList;
 
     for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-      if (workbook.getSheetName(i).equals(workbookSheetNameStrategy.apply(i))) {
+      if (workbook.getSheetName(i).equals(sheetNameStrategy.apply(i))) {
         processYamlSheet(workbook.getSheetAt(i)).forEach(nodeList::add);
       }
     }
@@ -67,7 +67,7 @@ public class YamlWorkbookReader {
       if (row == null) continue;
 
       String firstCellValue = getCellValue(row, 0);
-      if (workbookSymbol.getFrontmatter().equals(firstCellValue)) {
+      if (workbookSyntax.getFrontmatter().equals(firstCellValue)) {
         if (!currentDoc.isEmpty()) {
           documents.add(currentDoc);
           currentDoc = new ArrayList<>();
@@ -88,7 +88,7 @@ public class YamlWorkbookReader {
     if (startIdx >= endIdx) return null;
 
     List<CommentLine> pendingComments = new ArrayList<>();
-    int cellOffset = indentLevel * workbookSymbol.getIndentationCellNum();
+    int cellOffset = indentLevel * workbookSyntax.getIndentationCellNum();
 
     // Find first non-comment row to determine structure type
     int firstContentIdx = startIdx;
@@ -120,7 +120,8 @@ public class YamlWorkbookReader {
         return parseMapping(rows, indentLevel, startIdx, endIdx, pendingComments);
       } else {
         // Single scalar value
-        ScalarNode node = new ScalarNode(Tag.STR, unescapeValueIfNeeded(firstValue), null, null, ScalarStyle.PLAIN);
+        ScalarNode node = new ScalarNode(Tag.STR, unescapeValueIfNeeded(firstValue), null, null,
+            ScalarStyle.PLAIN);
         if (!pendingComments.isEmpty()) {
           node.setBlockComments(pendingComments);
         }
@@ -132,7 +133,7 @@ public class YamlWorkbookReader {
   private MappingNode parseMapping(List<Row> rows, int indentLevel, int startIdx, int endIdx,
       List<CommentLine> leadingComments) {
     List<NodeTuple> tuples = new ArrayList<>();
-    int cellOffset = indentLevel * workbookSymbol.getIndentationCellNum();
+    int cellOffset = indentLevel * workbookSyntax.getIndentationCellNum();
     List<CommentLine> pendingComments = new ArrayList<>(leadingComments);
 
     int i = startIdx;
@@ -193,7 +194,8 @@ public class YamlWorkbookReader {
         String inlineValue = getCellValue(row, valueOffset);
         if (inlineValue != null) {
           // Inline scalar value
-          valueNode = new ScalarNode(Tag.STR, unescapeValueIfNeeded(inlineValue), null, null, ScalarStyle.PLAIN);
+          valueNode = new ScalarNode(Tag.STR, unescapeValueIfNeeded(inlineValue), null, null,
+              ScalarStyle.PLAIN);
           // Check for value inline comments
           List<CommentLine> inlineComments = parseInlineComments(row, valueOffset + 1);
           if (!inlineComments.isEmpty()) {
@@ -231,7 +233,7 @@ public class YamlWorkbookReader {
   private SequenceNode parseSequence(List<Row> rows, int indentLevel, int startIdx, int endIdx,
       List<CommentLine> leadingComments) {
     List<Node> items = new ArrayList<>();
-    int cellOffset = indentLevel * workbookSymbol.getIndentationCellNum();
+    int cellOffset = indentLevel * workbookSyntax.getIndentationCellNum();
     List<CommentLine> pendingComments = new ArrayList<>(leadingComments);
 
     int i = startIdx;
@@ -270,7 +272,8 @@ public class YamlWorkbookReader {
 
       if (inlineValue != null) {
         // Inline scalar value
-        itemNode = new ScalarNode(Tag.STR, unescapeValueIfNeeded(inlineValue), null, null, ScalarStyle.PLAIN);
+        itemNode = new ScalarNode(Tag.STR, unescapeValueIfNeeded(inlineValue), null, null,
+            ScalarStyle.PLAIN);
         // Check for inline comments
         List<CommentLine> inlineComments = parseInlineComments(row, cellOffset + 2);
         if (!inlineComments.isEmpty()) {
@@ -322,7 +325,7 @@ public class YamlWorkbookReader {
     for (int i = 0; i <= row.getLastCellNum(); i++) {
       String value = getCellValue(row, i);
       if (value != null && !value.isEmpty()) {
-        return i / workbookSymbol.getIndentationCellNum();
+        return i / workbookSyntax.getIndentationCellNum();
       }
     }
     return 0;
@@ -349,9 +352,8 @@ public class YamlWorkbookReader {
   }
 
   private boolean isComment(String value) {
-    return value != null
-        && value.startsWith(workbookSymbol.getCommentMark())
-        && !value.startsWith(workbookSymbol.getValueEscapeMark() + workbookSymbol.getCommentMark());
+    return value != null && value.startsWith(workbookSyntax.getCommentMark())
+        && !value.startsWith(workbookSyntax.getValueEscapeMark() + workbookSyntax.getCommentMark());
   }
 
   private String unescapeValueIfNeeded(String value) {
@@ -359,28 +361,28 @@ public class YamlWorkbookReader {
       return null;
     }
     // Only unescape if value STARTS with escape mark
-    if (value.startsWith(workbookSymbol.getValueEscapeMark())) {
-      return value.substring(workbookSymbol.getValueEscapeMark().length());
+    if (value.startsWith(workbookSyntax.getValueEscapeMark())) {
+      return value.substring(workbookSyntax.getValueEscapeMark().length());
     }
     return value;
   }
 
   private boolean isItemMark(String value) {
-    return workbookSymbol.getItemMark().equals(value);
+    return workbookSyntax.getItemMark().equals(value);
   }
 
   private CommentLine createCommentLine(String commentValue) {
     String text = commentValue;
-    if (text.startsWith(workbookSymbol.getCommentMark())) {
-      text = text.substring(workbookSymbol.getCommentMark().length()).trim();
+    if (text.startsWith(workbookSyntax.getCommentMark())) {
+      text = text.substring(workbookSyntax.getCommentMark().length()).trim();
     }
     return new CommentLine(null, null, " " + text, CommentType.BLOCK);
   }
 
   private CommentLine createInlineCommentLine(String commentValue) {
     String text = commentValue;
-    if (text.startsWith(workbookSymbol.getCommentMark())) {
-      text = text.substring(workbookSymbol.getCommentMark().length()).trim();
+    if (text.startsWith(workbookSyntax.getCommentMark())) {
+      text = text.substring(workbookSyntax.getCommentMark().length()).trim();
     }
     return new CommentLine(null, null, " " + text, CommentType.IN_LINE);
   }
@@ -390,7 +392,7 @@ public class YamlWorkbookReader {
     for (int i = startCellIndex; i <= row.getLastCellNum(); i++) {
       String value = getCellValue(row, i);
       if (value != null && isComment(value)) {
-        String text = value.substring(workbookSymbol.getCommentMark().length()).trim();
+        String text = value.substring(workbookSyntax.getCommentMark().length()).trim();
         comments.add(new CommentLine(null, null, " " + text, CommentType.IN_LINE));
       }
     }

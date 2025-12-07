@@ -3,7 +3,7 @@ package com.github.wnameless.workbook.yamlworkbook;
 import lombok.Data;
 
 @Data
-public final class DefaultWorkbookSymbol implements WorkbookSymbol {
+public final class DefaultWorkbookSyntax implements WorkbookSyntax {
 
   public final String frontmatter = "---";
   public final String commentMark = "#";
