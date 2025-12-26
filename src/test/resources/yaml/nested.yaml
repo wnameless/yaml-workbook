@@ -1,0 +1,9 @@
+person:
+  name: Jane Smith
+  address:
+    street: 123 Main St
+    city: Boston
+    zip: 02101
+  contact:
+    email: jane@example.com
+    phone: 555-1234

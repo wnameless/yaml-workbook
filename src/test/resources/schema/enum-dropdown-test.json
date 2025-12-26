@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Enum Dropdown Test Schema",
+  "properties": {
+    "status": {
+      "type": "string",
+      "title": "Status",
+      "enum": ["active", "inactive", "pending"],
+      "enumNames": ["Active", "Inactive", "Pending"]
+    },
+    "priority": {
+      "type": "integer",
+      "title": "Priority Level",
+      "enum": [1, 2, 3, 4, 5],
+      "enumNames": ["Critical", "High", "Medium", "Low", "Minimal"]
+    },
+    "country": {
+      "type": "string",
+      "title": "Country",
+      "enum": [
+        "US", "CA", "MX", "GB", "FR", "DE", "IT", "ES", "PT", "NL",
+        "BE", "CH", "AT", "SE", "NO", "DK", "FI", "IE", "AU", "NZ",
+        "JP", "KR", "CN", "TW", "HK", "SG", "MY", "TH", "VN", "ID",
+        "PH", "IN", "BR", "AR", "CL", "CO", "PE", "ZA", "EG", "NG"
+      ],
+      "enumNames": [
+        "United States", "Canada", "Mexico", "United Kingdom", "France",
+        "Germany", "Italy", "Spain", "Portugal", "Netherlands",
+        "Belgium", "Switzerland", "Austria", "Sweden", "Norway",
+        "Denmark", "Finland", "Ireland", "Australia", "New Zealand",
+        "Japan", "South Korea", "China", "Taiwan", "Hong Kong",
+        "Singapore", "Malaysia", "Thailand", "Vietnam", "Indonesia",
+        "Philippines", "India", "Brazil", "Argentina", "Chile",
+        "Colombia", "Peru", "South Africa", "Egypt", "Nigeria"
+      ]
+    },
+    "department": {
+      "type": "string",
+      "title": "Department",
+      "enum": ["eng", "sales", "mkt", "hr", "fin"],
+      "enumNames": ["Engineering", "Sales", "Marketing", "Human Resources", "Finance"]
+    }
+  },
+  "required": ["status", "country"]
+}

@@ -1,0 +1,227 @@
+{
+  "title": "Phase階段通知規則設定",
+  "type": "object",
+  "required": [
+    "phaseTypeName",
+    "ruleName",
+    "onAdvice",
+    "messageTitle",
+    "messageContent"
+  ],
+  "properties": {
+    "phaseTypeName": {
+      "title": "Phase名稱",
+      "type": "string"
+    },
+    "ruleName": {
+      "title": "規則名稱",
+      "type": "string"
+    },
+    "onAdvice": {
+      "title": "觸發機制",
+      "type": "string",
+      "enum": [
+        "ENTRY",
+        "ENTRY_FROM",
+        "EXIT",
+        "ALWAYS"
+      ],
+      "enumNames": [
+        "進入狀態時",
+        "從指定動作進入狀態時",
+        "離開狀態時",
+        "狀態持續時"
+      ]
+    },
+    "notificationInterval": {
+      "title": "狀態持續時，通知間隔(小時)",
+      "description": "只會在[狀態持續時]作用",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 720
+    },
+    "initTrigger": {
+      "title": "觸發動作",
+      "type": "string"
+    },
+    "targetState": {
+      "title": "進入狀態",
+      "type": "string"
+    },
+    "defaultProperties": {
+      "title": "預設參數索引",
+      "type": "string",
+      "description": "可以使用在「標題參數」與「內容參數」中"
+    },
+    "messageTitle": {
+      "title": "訊息標題",
+      "description": "請使用 {0}, {1}...，放置參數於標題中",
+      "type": "string"
+    },
+    "titleProperties": {
+      "title": "標題參數",
+      "description": "請使用 JsonPath 表示，Ex: $.store.book[0].title",
+      "type": "array",
+      "items": {
+        "title": "參數",
+        "type": "string"
+      }
+    },
+    "messageContent": {
+      "title": "訊息內容",
+      "description": "請使用 {0}, {1}...，放置參數於內容中",
+      "type": "string"
+    },
+    "contentProperties": {
+      "title": "內容參數",
+      "description": "請使用 JsonPath 表示，Ex: $.store.book[0].title",
+      "type": "array",
+      "items": {
+        "title": "參數",
+        "type": "string"
+      }
+    },
+    "actionPath": {
+      "title": "訊息跳轉頁面",
+      "description": "點擊訊息後的跳轉目標",
+      "type": "string",
+      "enum": [
+        "INDEX",
+        "SHOW",
+        "EDIT",
+        "NEW"
+      ],
+      "enumNames": [
+        "列表頁面",
+        "瀏覽頁面",
+        "編輯頁面",
+        "新增頁面"
+      ]
+    },
+    "messageTo": {
+      "title": "通知對象",
+      "type": "array",
+      "items": {
+        "title": "角色名稱",
+        "type": "string"
+      }
+    },
+    "messageHook": {
+      "title": "通知調回機制",
+      "type": "string",
+      "enum": [
+        "ENTRY",
+        "ENTRY_FROM",
+        "EXIT"
+      ],
+      "enumNames": [
+        "進入狀態時",
+        "從指定動作進入狀態時",
+        "離開狀態時"
+      ]
+    },
+    "messageHookState": {
+      "title": "通知調回機制判斷狀態",
+      "type": "string"
+    },
+    "messageHookTrigger": {
+      "title": "通知調回機制觸發動作",
+      "type": "string"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "onAdvice": {
+            "enum": [
+              "ALWAYS"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "notificationInterval"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "onAdvice": {
+            "enum": [
+              "ENTRY",
+              "EXIT",
+              "ALWAYS"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "targetState"
+        ]
+      },
+      "else": {
+        "if": {
+          "properties": {
+            "onAdvice": {
+              "const": "ENTRY_FROM"
+            }
+          }
+        },
+        "then": {
+          "required": [
+            "targetState",
+            "initTrigger"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "messageHook": {
+            "const": null
+          }
+        }
+      },
+      "then": {
+        "required": []
+      },
+      "else": {
+        "if": {
+          "properties": {
+            "messageHook": {
+              "enum": [
+                "ENTRY",
+                "EXIT"
+              ]
+            }
+          }
+        },
+        "then": {
+          "required": [
+            "messageHookState"
+          ]
+        },
+        "else": {
+          "if": {
+            "properties": {
+              "messageHook": {
+                "const": "ENTRY_FROM"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "messageHookState",
+              "messageHookTrigger"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
