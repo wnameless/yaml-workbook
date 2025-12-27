@@ -28,6 +28,7 @@ import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.nodes.NodeTuple;
 import org.yaml.snakeyaml.nodes.ScalarNode;
 import org.yaml.snakeyaml.nodes.SequenceNode;
+import com.github.wnameless.json.jsonschemadatagenerator.AllOfOption;
 import com.github.wnameless.json.jsonschemadatagenerator.JsonSchemaDataGenerator;
 import com.github.wnameless.json.jsonschemadatagenerator.JsonSchemaPathNavigator;
 import lombok.Builder;
@@ -446,7 +447,11 @@ public class YamlWorkbookWriter {
       var workbook = new XSSFWorkbook();
 
       // 1. Generate skeleton JSON from schema
-      JsonNode skeleton = JsonSchemaDataGenerator.skeleton().generate(jsonSchema);
+      var generator = JsonSchemaDataGenerator.skeleton();
+      if (dataCollectConfig.isSkipAllOf()) {
+        generator = generator.withAllOfOption(AllOfOption.SKIP);
+      }
+      JsonNode skeleton = generator.generate(jsonSchema);
 
       // 2. Create navigator for metadata lookup
       JsonSchemaPathNavigator navigator = JsonSchemaPathNavigator.of(jsonSchema);

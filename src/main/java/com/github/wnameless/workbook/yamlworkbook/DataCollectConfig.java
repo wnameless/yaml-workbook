@@ -32,4 +32,12 @@ public class DataCollectConfig {
   @Builder.Default
   private boolean useHiddenSheetsForLongEnums = false;
 
+  /**
+   * When true, skips allOf merging during JSON Schema processing. Use this when schemas use allOf
+   * for conditional statements (if/then/else) that are not supported by the schema skeleton
+   * generator.
+   */
+  @Builder.Default
+  private boolean skipAllOf = false;
+
 }
