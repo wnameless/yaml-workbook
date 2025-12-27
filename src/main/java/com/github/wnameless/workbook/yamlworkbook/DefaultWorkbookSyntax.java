@@ -2,6 +2,11 @@ package com.github.wnameless.workbook.yamlworkbook;
 
 import lombok.Data;
 
+/**
+ * Default implementation of {@link WorkbookSyntax} with standard YAML symbols.
+ *
+ * @author Wei-Ming Wu
+ */
 @Data
 public final class DefaultWorkbookSyntax implements WorkbookSyntax {
 

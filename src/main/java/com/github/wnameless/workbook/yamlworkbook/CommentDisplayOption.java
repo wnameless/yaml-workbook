@@ -2,6 +2,8 @@ package com.github.wnameless.workbook.yamlworkbook;
 
 /**
  * Display options for replaceable comment types (OBJECT, ARRAY, KEY, VALUE).
+ *
+ * @author Wei-Ming Wu
  */
 public enum CommentDisplayOption {
 

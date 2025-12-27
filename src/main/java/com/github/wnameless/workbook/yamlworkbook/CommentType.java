@@ -2,6 +2,8 @@ package com.github.wnameless.workbook.yamlworkbook;
 
 /**
  * Types of comments based on their position in YAML structure.
+ *
+ * @author Wei-Ming Wu
  */
 public enum CommentType {
 

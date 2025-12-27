@@ -2,6 +2,8 @@ package com.github.wnameless.workbook.yamlworkbook;
 
 /**
  * Defines how indentation is represented in the workbook.
+ *
+ * @author Wei-Ming Wu
  */
 public enum IndentationMode {
 

@@ -10,6 +10,8 @@ package com.github.wnameless.workbook.yamlworkbook;
  * <li>Level 2: "2>"</li>
  * <li>Level N: "N>"</li>
  * </ul>
+ *
+ * @author Wei-Ming Wu
  */
 public class DefaultIndentPrefixStrategy implements IndentPrefixStrategy {
 

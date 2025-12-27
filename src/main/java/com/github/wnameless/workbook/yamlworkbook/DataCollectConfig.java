@@ -13,6 +13,8 @@ import lombok.Getter;
  * <li>{@code enumNames} (when present) are used as dropdown display values, actual enum values
  * stored in cell comment</li>
  * </ul>
+ *
+ * @author Wei-Ming Wu
  */
 @Getter
 @Builder

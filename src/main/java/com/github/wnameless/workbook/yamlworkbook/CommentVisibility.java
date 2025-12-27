@@ -2,6 +2,8 @@ package com.github.wnameless.workbook.yamlworkbook;
 
 /**
  * Visibility options for non-replaceable comment types (DOCUMENT, KEY_VALUE_PAIR, ITEM).
+ *
+ * @author Wei-Ming Wu
  */
 public enum CommentVisibility {
 

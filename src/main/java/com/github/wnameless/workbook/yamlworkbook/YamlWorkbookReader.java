@@ -28,6 +28,21 @@ import org.yaml.snakeyaml.nodes.SequenceNode;
 import org.yaml.snakeyaml.nodes.Tag;
 import lombok.Builder;
 
+/**
+ * Converts Excel workbooks back to SnakeYAML Node trees for roundtrip support.
+ * <p>
+ * Uses Lombok's {@code @Builder} pattern for configuration. Key features:
+ * <ul>
+ * <li>Reconstructs SnakeYAML Node trees from workbook cells</li>
+ * <li>Preserves structure and comments for roundtrip conversion</li>
+ * <li>Supports the same print modes and indentation modes as {@link YamlWorkbookWriter}</li>
+ * </ul>
+ *
+ * @author Wei-Ming Wu
+ * @see YamlWorkbookWriter
+ * @see PrintMode
+ * @see IndentationMode
+ */
 @Builder
 public class YamlWorkbookReader {
 
@@ -42,6 +57,12 @@ public class YamlWorkbookReader {
   @Builder.Default
   private IndentPrefixStrategy indentPrefixStrategy = IndentPrefixStrategy.DEFAULT;
 
+  /**
+   * Converts an Excel workbook to a list of SnakeYAML Node objects.
+   *
+   * @param workbook the Excel workbook to convert (may be null)
+   * @return a list of YAML document nodes, or empty list if workbook is null
+   */
   public List<Node> fromWorkbook(Workbook workbook) {
     var nodeList = new ArrayList<Node>();
     if (workbook == null) return nodeList;

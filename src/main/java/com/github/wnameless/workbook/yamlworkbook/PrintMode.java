@@ -1,5 +1,10 @@
 package com.github.wnameless.workbook.yamlworkbook;
 
+/**
+ * Defines the output format modes for YAML to workbook conversion.
+ *
+ * @author Wei-Ming Wu
+ */
 public enum PrintMode {
 
   /** Direct YAML-to-cell mapping, no transformation */

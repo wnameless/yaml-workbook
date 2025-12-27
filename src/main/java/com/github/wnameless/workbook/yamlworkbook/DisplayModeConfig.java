@@ -5,6 +5,8 @@ import lombok.Getter;
 
 /**
  * Configuration for WORKBOOK_READABLE mode, controlling how comments are rendered.
+ *
+ * @author Wei-Ming Wu
  */
 @Getter
 @Builder

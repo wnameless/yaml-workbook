@@ -5,6 +5,8 @@ package com.github.wnameless.workbook.yamlworkbook;
  * <p>
  * Used by {@link YamlWorkbookWriter} to generate prefix strings for each indent level, and by
  * {@link YamlWorkbookReader} to parse prefix strings back to indent levels.
+ *
+ * @author Wei-Ming Wu
  */
 public interface IndentPrefixStrategy {
 

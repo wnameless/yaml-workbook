@@ -24,6 +24,8 @@ import tools.jackson.databind.node.StringNode;
 
 /**
  * Utility class to convert Jackson JsonNode to SnakeYAML Node.
+ *
+ * @author Wei-Ming Wu
  */
 @UtilityClass
 public class JsonNodeToYamlNodeConverter {

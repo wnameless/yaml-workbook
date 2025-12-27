@@ -34,6 +34,22 @@ import com.github.wnameless.json.jsonschemadatagenerator.JsonSchemaPathNavigator
 import lombok.Builder;
 import tools.jackson.databind.JsonNode;
 
+/**
+ * Converts YAML content to Excel workbooks with support for multiple print modes.
+ * <p>
+ * Uses Lombok's {@code @Builder} pattern for configuration. Key features:
+ * <ul>
+ * <li>Parses YAML via SnakeYAML with comment support</li>
+ * <li>Generates Apache POI XSSFWorkbook (.xlsx format)</li>
+ * <li>Supports three print modes: YAML_ORIENTED, WORKBOOK_READABLE, DATA_COLLECT</li>
+ * <li>Supports two indentation modes: CELL_OFFSET (default) and PREFIX</li>
+ * </ul>
+ *
+ * @author Wei-Ming Wu
+ * @see YamlWorkbookReader
+ * @see PrintMode
+ * @see IndentationMode
+ */
 @Builder
 public class YamlWorkbookWriter {
 
@@ -89,6 +105,13 @@ public class YamlWorkbookWriter {
     }
   }
 
+  /**
+   * Converts YAML content from Readers to an Excel workbook.
+   *
+   * @param yamlContent the primary YAML content reader
+   * @param yamlContents additional YAML content readers (optional)
+   * @return the generated Excel workbook
+   */
   public Workbook toWorkbook(Reader yamlContent, Reader... yamlContents) {
     resetState();
     var workbook = new XSSFWorkbook();

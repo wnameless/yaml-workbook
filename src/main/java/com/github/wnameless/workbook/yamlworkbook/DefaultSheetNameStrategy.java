@@ -1,5 +1,11 @@
 package com.github.wnameless.workbook.yamlworkbook;
 
+/**
+ * Default implementation of {@link SheetNameStrategy} using "Sheet1", "Sheet2", etc. naming
+ * pattern.
+ *
+ * @author Wei-Ming Wu
+ */
 public final class DefaultSheetNameStrategy implements SheetNameStrategy {
 
   @Override
