@@ -202,6 +202,45 @@ Features:
 - `enum` values become dropdown cell validation
 - `enumNames` (when present) become dropdown display values
 
+## DataCollectConfig Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `highlightRequired` | boolean | false | Highlight required fields with styling |
+| `useHiddenSheetsForLongEnums` | boolean | false | Use hidden sheets for dropdowns exceeding 256 chars |
+| `skipAllOf` | boolean | false | Skip allOf merging for conditional schema patterns |
+
+# DisplayModeConfig (WORKBOOK_READABLE)
+
+Customize how comments are rendered in WORKBOOK_READABLE mode:
+
+```java
+Workbook workbook = YamlWorkbook.writerBuilder()
+    .printMode(PrintMode.WORKBOOK_READABLE)
+    .displayModeConfig(DisplayModeConfig.builder()
+        .keyComment(CommentDisplayOption.DISPLAY_NAME)  // Use comment as display name
+        .valueComment(CommentDisplayOption.COMMENT)     // Keep as separate comment cell
+        .documentComment(CommentVisibility.HIDDEN)      // Hide document-level comments
+        .build())
+    .build()
+    .toWorkbook(yamlReader);
+```
+
+## CommentDisplayOption (for replaceable types)
+
+| Option | Description |
+|--------|-------------|
+| `DISPLAY_NAME` | Replace key/value with comment content (default) |
+| `HIDDEN` | Show original key/value, ignore comment |
+| `COMMENT` | Keep as separate comment cell |
+
+## CommentVisibility (for structural types)
+
+| Option | Description |
+|--------|-------------|
+| `HIDDEN` | Hide comment (default) |
+| `COMMENT` | Show comment in separate cell |
+
 # Customization
 
 ## Custom Workbook Syntax

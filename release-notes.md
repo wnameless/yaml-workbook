@@ -17,7 +17,7 @@ Initial release with support for:
 
 - **Three Print Modes**
   - `YAML_ORIENTED` - Direct YAML-to-cell mapping (default)
-  - `WORKBOOK_READABLE` - Human-readable display with original data in cell comments
+  - `WORKBOOK_READABLE` - Human-readable display with original data in cell comments, configurable via `DisplayModeConfig`
   - `DATA_COLLECT` - Schema-driven data collection with dropdowns from JSON Schema
 
 - **Two Indentation Modes**
@@ -31,8 +31,20 @@ Initial release with support for:
 - `enum` values become dropdown cell validation
 - `enumNames` support for human-readable dropdown options
 - `DataCollectConfig` options:
+  - `highlightRequired` - Highlight required fields with styling
   - `useHiddenSheetsForLongEnums` - Handle dropdowns exceeding 256 character limit
   - `skipAllOf` - Skip allOf merging for conditional schema patterns
+
+### DisplayModeConfig (WORKBOOK_READABLE)
+
+- Fine-grained control over comment rendering in WORKBOOK_READABLE mode
+- `CommentDisplayOption` for replaceable types (object, array, key, value comments):
+  - `DISPLAY_NAME` - Replace key/value with comment content (default)
+  - `HIDDEN` - Show original key/value, ignore comment
+  - `COMMENT` - Keep as separate comment cell
+- `CommentVisibility` for structural types (document, key-value pair, item comments):
+  - `HIDDEN` - Hide comment (default)
+  - `COMMENT` - Show comment in separate cell
 
 ### Pluggable Strategies
 
