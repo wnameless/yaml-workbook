@@ -10,7 +10,7 @@
 
   <name>yaml-workbook</name>
   <description>A Java utility to convert YAML to Workbook(Excel) and vice versa</description>
-  <url>https://github.com/wnameless/yaml2workbook</url>
+  <url>https://github.com/wnameless/yaml-workbook</url>
 
   <licenses>
     <license>
