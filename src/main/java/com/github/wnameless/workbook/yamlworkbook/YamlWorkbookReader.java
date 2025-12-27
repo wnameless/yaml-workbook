@@ -37,6 +37,10 @@ public class YamlWorkbookReader {
   private WorkbookSyntax workbookSyntax = WorkbookSyntax.DEFAULT;
   @Builder.Default
   private SheetNameStrategy sheetNameStrategy = SheetNameStrategy.DEFAULT;
+  @Builder.Default
+  private IndentationMode indentationMode = IndentationMode.CELL_OFFSET;
+  @Builder.Default
+  private IndentPrefixStrategy indentPrefixStrategy = IndentPrefixStrategy.DEFAULT;
 
   public List<Node> fromWorkbook(Workbook workbook) {
     var nodeList = new ArrayList<Node>();
@@ -108,7 +112,7 @@ public class YamlWorkbookReader {
     if (startIdx >= endIdx) return null;
 
     List<CommentLine> pendingComments = new ArrayList<>();
-    int cellOffset = indentLevel * workbookSyntax.getIndentationCellNum();
+    int cellOffset = getContentOffset(indentLevel);
 
     // Find first non-comment row to determine structure type
     int firstContentIdx = startIdx;
@@ -153,7 +157,7 @@ public class YamlWorkbookReader {
   private MappingNode parseMapping(List<Row> rows, int indentLevel, int startIdx, int endIdx,
       List<CommentLine> leadingComments) {
     List<NodeTuple> tuples = new ArrayList<>();
-    int cellOffset = indentLevel * workbookSyntax.getIndentationCellNum();
+    int cellOffset = getContentOffset(indentLevel);
     List<CommentLine> pendingComments = new ArrayList<>(leadingComments);
 
     int i = startIdx;
@@ -253,7 +257,7 @@ public class YamlWorkbookReader {
   private SequenceNode parseSequence(List<Row> rows, int indentLevel, int startIdx, int endIdx,
       List<CommentLine> leadingComments) {
     List<Node> items = new ArrayList<>();
-    int cellOffset = indentLevel * workbookSyntax.getIndentationCellNum();
+    int cellOffset = getContentOffset(indentLevel);
     List<CommentLine> pendingComments = new ArrayList<>(leadingComments);
 
     int i = startIdx;
@@ -340,8 +344,39 @@ public class YamlWorkbookReader {
     return nextIndent > indentLevel;
   }
 
+  private boolean isPrefixMode() {
+    return indentationMode == IndentationMode.PREFIX;
+  }
+
+  private int getContentOffset(int indentLevel) {
+    if (isPrefixMode()) {
+      // In prefix mode: level 0 content at col 0, levels 1+ content at col 1
+      return indentLevel > 0 ? 1 : 0;
+    }
+    return indentLevel * workbookSyntax.getIndentationCellNum();
+  }
+
   private int getIndentLevel(Row row) {
     if (row == null) return 0;
+
+    if (isPrefixMode()) {
+      // In prefix mode, check cell 0 for a prefix
+      String firstCell = getCellStringValue(row.getCell(0));
+      if (firstCell == null || firstCell.isEmpty()) {
+        // No prefix means level 0 (or empty row)
+        // Check if there's content at col 0
+        String content = getCellValue(row, 0);
+        return (content != null && !content.isEmpty()) ? 0 : 0;
+      }
+      int level = indentPrefixStrategy.parsePrefix(firstCell);
+      if (level > 0) {
+        return level;
+      }
+      // Not a valid prefix, treat as level 0 content
+      return 0;
+    }
+
+    // Original CELL_OFFSET behavior
     for (int i = 0; i <= row.getLastCellNum(); i++) {
       String value = getCellValue(row, i);
       if (value != null && !value.isEmpty()) {

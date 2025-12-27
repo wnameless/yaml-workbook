@@ -51,6 +51,10 @@ public class YamlWorkbookWriter {
   private NodeToSheetMapper nodeToSheetMapper = NodeToSheetMapper.DEFAULT;
   @Builder.Default
   private SheetNameStrategy sheetNameStrategy = SheetNameStrategy.DEFAULT;
+  @Builder.Default
+  private IndentationMode indentationMode = IndentationMode.CELL_OFFSET;
+  @Builder.Default
+  private IndentPrefixStrategy indentPrefixStrategy = IndentPrefixStrategy.DEFAULT;
 
   /** JSON Schema string for DATA_COLLECT mode */
   private String jsonSchema;
@@ -64,6 +68,25 @@ public class YamlWorkbookWriter {
     visibleSheets.clear();
     hiddenSheets.clear();
     hiddenSheetEnumRowCounter.clear();
+  }
+
+  private boolean isPrefixMode() {
+    return indentationMode == IndentationMode.PREFIX;
+  }
+
+  private int calculateCellIndex(int indentLevel) {
+    if (isPrefixMode()) {
+      // In prefix mode: level 0 content at col 0, levels 1+ content at col 1
+      return indentLevel > 0 ? 1 : 0;
+    }
+    return indentLevel * workbookSyntax.getIndentationCellNum();
+  }
+
+  private void writePrefixIfEnabled(Row row, int indentLevel) {
+    if (isPrefixMode() && indentLevel > 0) {
+      Cell prefixCell = row.createCell(0);
+      prefixCell.setCellValue(indentPrefixStrategy.generatePrefix(indentLevel));
+    }
   }
 
   public Workbook toWorkbook(Reader yamlContent, Reader... yamlContents) {
@@ -195,7 +218,8 @@ public class YamlWorkbookWriter {
       case DISPLAY_NAME -> {
         // For OBJECT/ARRAY, DISPLAY_NAME shows the comment as a header row
         Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-        int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
+        writePrefixIfEnabled(row, indentLevel);
+        int cellIndex = calculateCellIndex(indentLevel);
         Cell cell = row.createCell(cellIndex);
         String commentText = extractCommentText(comments);
         cell.setCellValue(commentText);
@@ -210,7 +234,8 @@ public class YamlWorkbookWriter {
 
   private void traverseScalarNode(ScalarNode node, Sheet sheet, int indentLevel) {
     Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-    int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
+    writePrefixIfEnabled(row, indentLevel);
+    int cellIndex = calculateCellIndex(indentLevel);
     Cell cell = row.createCell(cellIndex);
     cell.setCellValue(escapeValueIfNeeded(node.getValue()));
   }
@@ -230,7 +255,8 @@ public class YamlWorkbookWriter {
 
       if (keyNode instanceof ScalarNode scalarKey) {
         Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-        int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
+        writePrefixIfEnabled(row, indentLevel);
+        int cellIndex = calculateCellIndex(indentLevel);
         Cell keyCell = row.createCell(cellIndex);
 
         // Handle key display
@@ -341,7 +367,8 @@ public class YamlWorkbookWriter {
       }
 
       Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-      int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
+      writePrefixIfEnabled(row, indentLevel);
+      int cellIndex = calculateCellIndex(indentLevel);
       Cell itemMarkCell = row.createCell(cellIndex);
       itemMarkCell.setCellValue(workbookSyntax.getItemMark());
 
@@ -372,7 +399,8 @@ public class YamlWorkbookWriter {
 
     for (CommentLine comment : comments) {
       Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-      int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
+      writePrefixIfEnabled(row, indentLevel);
+      int cellIndex = calculateCellIndex(indentLevel);
       Cell cell = row.createCell(cellIndex);
       cell.setCellValue(workbookSyntax.getCommentMark() + " " + comment.getValue().trim());
     }
@@ -502,7 +530,8 @@ public class YamlWorkbookWriter {
   private void traverseScalarNodeWithPath(ScalarNode node, Sheet sheet, int indentLevel,
       String jsonPath, JsonSchemaPathNavigator navigator) {
     Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-    int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
+    writePrefixIfEnabled(row, indentLevel);
+    int cellIndex = calculateCellIndex(indentLevel);
     Cell cell = row.createCell(cellIndex);
 
     String value = node.getValue();
@@ -529,7 +558,8 @@ public class YamlWorkbookWriter {
         JsonNode propertySchema = navigator.findSchema(propertyPath).orElse(null);
 
         Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-        int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
+        writePrefixIfEnabled(row, indentLevel);
+        int cellIndex = calculateCellIndex(indentLevel);
         Cell keyCell = row.createCell(cellIndex);
 
         // Use title as display name if available
@@ -567,7 +597,8 @@ public class YamlWorkbookWriter {
 
     for (Node item : node.getValue()) {
       Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-      int cellIndex = indentLevel * workbookSyntax.getIndentationCellNum();
+      writePrefixIfEnabled(row, indentLevel);
+      int cellIndex = calculateCellIndex(indentLevel);
       Cell itemMarkCell = row.createCell(cellIndex);
       itemMarkCell.setCellValue(workbookSyntax.getItemMark());
 

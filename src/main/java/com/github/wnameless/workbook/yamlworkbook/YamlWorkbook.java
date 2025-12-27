@@ -26,6 +26,20 @@ public class YamlWorkbook {
     return YamlWorkbookReader.builder();
   }
 
+  /**
+   * Returns a writer builder pre-configured for PREFIX indentation mode.
+   */
+  public YamlWorkbookWriter.YamlWorkbookWriterBuilder prefixWriterBuilder() {
+    return YamlWorkbookWriter.builder().indentationMode(IndentationMode.PREFIX);
+  }
+
+  /**
+   * Returns a reader builder pre-configured for PREFIX indentation mode.
+   */
+  public YamlWorkbookReader.YamlWorkbookReaderBuilder prefixReaderBuilder() {
+    return YamlWorkbookReader.builder().indentationMode(IndentationMode.PREFIX);
+  }
+
   public Workbook toWorkbook(String yamlContent, String... yamlContents) {
     int length = yamlContents == null ? 0 : yamlContents.length;
     StringReader[] yamlContentReaders = new StringReader[length];
