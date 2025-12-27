@@ -60,7 +60,14 @@ public class YamlWorkbookWriter {
   private final Map<Integer, Sheet> hiddenSheets = new HashMap<>();
   private final Map<Integer, Integer> hiddenSheetEnumRowCounter = new HashMap<>();
 
+  private void resetState() {
+    visibleSheets.clear();
+    hiddenSheets.clear();
+    hiddenSheetEnumRowCounter.clear();
+  }
+
   public Workbook toWorkbook(Reader yamlContent, Reader... yamlContents) {
+    resetState();
     var workbook = new XSSFWorkbook();
 
     LoaderOptions options = new LoaderOptions();
@@ -442,6 +449,8 @@ public class YamlWorkbookWriter {
       throw new IllegalStateException(
           "toWorkbook() without parameters requires DATA_COLLECT mode and jsonSchema to be set");
     }
+
+    resetState();
 
     try {
       var workbook = new XSSFWorkbook();

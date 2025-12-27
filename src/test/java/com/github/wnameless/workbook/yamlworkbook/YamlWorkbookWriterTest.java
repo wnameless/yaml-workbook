@@ -948,6 +948,111 @@ class YamlWorkbookWriterTest {
     workbook.close();
   }
 
+  // ==================== Writer Reuse Tests ====================
+
+  @Test
+  void testWriterReuseWithYamlContent() throws IOException {
+    // Verify that calling toWorkbook() multiple times on the same writer instance
+    // produces independent results without state accumulation
+    String yaml1 = """
+        name: First
+        value: 1
+        """;
+    String yaml2 = """
+        name: Second
+        value: 2
+        extra: field
+        """;
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.YAML_ORIENTED)
+        .build();
+
+    // First call
+    Workbook workbook1 = writer.toWorkbook(new java.io.StringReader(yaml1));
+    assertNotNull(workbook1);
+    assertEquals(1, workbook1.getNumberOfSheets());
+    Sheet sheet1 = workbook1.getSheetAt(0);
+    assertEquals(2, sheet1.getLastRowNum()); // frontmatter + 2 rows
+
+    // Second call on same writer instance
+    Workbook workbook2 = writer.toWorkbook(new java.io.StringReader(yaml2));
+    assertNotNull(workbook2);
+    assertEquals(1, workbook2.getNumberOfSheets()); // Should be 1, not 2
+    Sheet sheet2 = workbook2.getSheetAt(0);
+    assertEquals(3, sheet2.getLastRowNum()); // frontmatter + 3 rows
+
+    // Verify content is independent
+    assertEquals("name", sheet1.getRow(1).getCell(0).getStringCellValue());
+    assertEquals("First", sheet1.getRow(1).getCell(1).getStringCellValue());
+
+    assertEquals("name", sheet2.getRow(1).getCell(0).getStringCellValue());
+    assertEquals("Second", sheet2.getRow(1).getCell(1).getStringCellValue());
+
+    workbook1.close();
+    workbook2.close();
+  }
+
+  @Test
+  void testWriterReuseStateIsReset() throws IOException {
+    // Test that internal visibleSheets list is reset between calls
+    // by verifying each workbook has exactly one sheet
+    String yaml = """
+        name: Test
+        value: 123
+        """;
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.YAML_ORIENTED)
+        .build();
+
+    // Call toWorkbook multiple times
+    for (int i = 0; i < 3; i++) {
+      Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
+      // Each workbook should have exactly 1 sheet, not accumulating
+      assertEquals(1, workbook.getNumberOfSheets(),
+          "Workbook " + i + " should have exactly 1 sheet");
+      workbook.close();
+    }
+  }
+
+  @Test
+  void testWriterReuseDataCollectMode() throws IOException {
+    // Test reuse in DATA_COLLECT mode
+    String jsonSchema = """
+        {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "age": { "type": "integer" }
+          }
+        }
+        """;
+
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
+        .printMode(PrintMode.DATA_COLLECT)
+        .jsonSchema(jsonSchema)
+        .build();
+
+    // First call
+    Workbook workbook1 = writer.toWorkbook();
+    assertNotNull(workbook1);
+    assertEquals(1, workbook1.getNumberOfSheets());
+    int rowCount1 = workbook1.getSheetAt(0).getLastRowNum();
+
+    // Second call on same writer instance
+    Workbook workbook2 = writer.toWorkbook();
+    assertNotNull(workbook2);
+    assertEquals(1, workbook2.getNumberOfSheets()); // Should be 1, not 2
+    int rowCount2 = workbook2.getSheetAt(0).getLastRowNum();
+
+    // Row counts should be identical
+    assertEquals(rowCount1, rowCount2);
+
+    workbook1.close();
+    workbook2.close();
+  }
+
   private String loadYaml(String resourcePath) throws IOException {
     try (InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
       if (is == null) {
