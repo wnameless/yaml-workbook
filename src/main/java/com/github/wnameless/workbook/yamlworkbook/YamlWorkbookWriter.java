@@ -829,4 +829,11 @@ public class YamlWorkbookWriter {
     return result;
   }
 
+  /**
+   * Builder class for {@link YamlWorkbookWriter}.
+   * <p>
+   * This stub class is completed by Lombok's {@code @Builder} annotation processor.
+   */
+  public static class YamlWorkbookWriterBuilder {}
+
 }

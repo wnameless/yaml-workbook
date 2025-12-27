@@ -618,4 +618,11 @@ public class YamlWorkbookReader {
     return comments;
   }
 
+  /**
+   * Builder class for {@link YamlWorkbookReader}.
+   * <p>
+   * This stub class is completed by Lombok's {@code @Builder} annotation processor.
+   */
+  public static class YamlWorkbookReaderBuilder {}
+
 }
