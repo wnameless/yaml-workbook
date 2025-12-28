@@ -327,7 +327,7 @@ Workbook workbook = YamlWorkbook.writerBuilder()
 | `sheetNameStrategy` | SheetNameStrategy | DEFAULT | Sheet naming convention |
 | `indentPrefixStrategy` | IndentPrefixStrategy | DEFAULT | Prefix generation (for PREFIX mode) |
 | `displayModeConfig` | DisplayModeConfig | DEFAULT | DISPLAY_MODE mode options |
-| `dataCollectConfig` | FormModeConfig | DEFAULT | FORM_MODE mode options |
+| `formModeConfig` | FormModeConfig | DEFAULT | FORM_MODE mode options |
 | `jsonSchema` | String | null | JSON Schema for FORM_MODE mode |
 
 ## Reader Configuration

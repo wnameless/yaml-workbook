@@ -412,7 +412,7 @@ public class YamlWorkbookReader {
     Cell cell = row.getCell(cellIndex);
     if (cell == null) return null;
 
-    // In WORKBOOK_READABLE or DATA_COLLECT mode, check cell comments for original values
+    // In DISPLAY_MODE or FORM_MODE, check cell comments for original values
     if (isReadableMode()) {
       String commentValue = getCellCommentValue(cell);
       if (commentValue != null) {

@@ -72,7 +72,7 @@ public class YamlWorkbookWriter {
   @Builder.Default
   private IndentPrefixStrategy indentPrefixStrategy = IndentPrefixStrategy.DEFAULT;
 
-  /** JSON Schema string for DATA_COLLECT mode */
+  /** JSON Schema string for FORM_MODE */
   private String jsonSchema;
 
   // Internal state for sheet tracking (not part of builder)
@@ -486,13 +486,13 @@ public class YamlWorkbookWriter {
     cell.setCellComment(comment);
   }
 
-  // ==================== DATA_COLLECT Mode Methods ====================
+  // ==================== FORM_MODE Methods ====================
 
   /**
-   * Creates a workbook from JSON Schema for DATA_COLLECT mode.
+   * Creates a workbook from JSON Schema for FORM_MODE.
    *
    * @return the generated workbook with dropdowns and schema metadata
-   * @throws IllegalStateException if not in DATA_COLLECT mode or jsonSchema is null
+   * @throws IllegalStateException if not in FORM_MODE or jsonSchema is null
    * @throws RuntimeException if schema parsing or processing fails
    */
   public Workbook toWorkbook() {
@@ -641,7 +641,7 @@ public class YamlWorkbookWriter {
     }
   }
 
-  // ==================== Helper Methods for DATA_COLLECT ====================
+  // ==================== Helper Methods for FORM_MODE ====================
 
   private void handleEnumCell(Cell cell, JsonNode schema, Sheet sheet) {
     JsonNode enumValues = schema.get("enum");
