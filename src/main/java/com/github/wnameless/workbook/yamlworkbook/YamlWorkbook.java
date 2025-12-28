@@ -24,7 +24,8 @@ import lombok.experimental.UtilityClass;
  * <li>{@link #toWorkbook(String, String...)} - Convert YAML strings to Excel workbook</li>
  * <li>{@link #fromWorkbook(Workbook)} - Convert Excel workbook to SnakeYAML Node list</li>
  * <li>{@link #toYaml(Workbook)} - Convert Excel workbook to YAML string</li>
- * <li>{@link #writerBuilder()} / {@link #readerBuilder()} - Access builder APIs for customization</li>
+ * <li>{@link #writerBuilder()} / {@link #readerBuilder()} - Access builder APIs for
+ * customization</li>
  * </ul>
  *
  * @author Wei-Ming Wu
@@ -170,23 +171,5 @@ public class YamlWorkbook {
 
     return writer.toString();
   }
-
-  // public static void main(String[] args) throws IOException {
-  // String jsonSchemaPath = "schema/ConfigurableNotification.schema.json";
-  // try (InputStream is = YamlWorkbook.class.getClassLoader().getResourceAsStream(jsonSchemaPath))
-  // {
-  // if (is == null) {
-  // throw new IOException("Resource not found: " + jsonSchemaPath);
-  // }
-  // var jsonSchema = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-  // var workbook = YamlWorkbook.writerBuilder().jsonSchema(jsonSchema)
-  // .printMode(PrintMode.DATA_COLLECT).build().toWorkbook();
-
-  // Path filePath = Paths.get("target/test-excel").resolve("main.xlsx");
-  // try (FileOutputStream fos = new FileOutputStream(filePath.toFile())) {
-  // workbook.write(fos);
-  // }
-  // }
-  // }
 
 }
