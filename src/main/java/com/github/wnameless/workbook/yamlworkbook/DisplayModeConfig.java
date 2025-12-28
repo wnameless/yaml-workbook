@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 /**
- * Configuration for WORKBOOK_READABLE mode, controlling how comments are rendered.
+ * Configuration for DISPLAY_MODE, controlling how comments are rendered.
  *
  * @author Wei-Ming Wu
  */
@@ -16,10 +16,10 @@ public class DisplayModeConfig {
 
   // Replaceable types - default to DISPLAY_NAME
   @Builder.Default
-  private CommentDisplayOption objectComment = CommentDisplayOption.DISPLAY_NAME;
+  private CommentDisplayOption mappingComment = CommentDisplayOption.DISPLAY_NAME;
 
   @Builder.Default
-  private CommentDisplayOption arrayComment = CommentDisplayOption.DISPLAY_NAME;
+  private CommentDisplayOption sequenceComment = CommentDisplayOption.DISPLAY_NAME;
 
   @Builder.Default
   private CommentDisplayOption keyComment = CommentDisplayOption.DISPLAY_NAME;

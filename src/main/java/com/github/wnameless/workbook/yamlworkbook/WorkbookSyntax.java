@@ -32,7 +32,7 @@ public interface WorkbookSyntax {
    *
    * @return the escape marker, typically "\\"
    */
-  String getValueEscapeMark();
+  String getEscapeMark();
 
   /**
    * Returns the sequence item marker.
@@ -46,7 +46,7 @@ public interface WorkbookSyntax {
    *
    * @return the indentation cell count, typically 1
    */
-  Short getIndentationCellNum();
+  Short getIndentCellCount();
 
 }
 

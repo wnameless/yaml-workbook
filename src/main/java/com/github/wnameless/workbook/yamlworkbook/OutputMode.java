@@ -5,15 +5,15 @@ package com.github.wnameless.workbook.yamlworkbook;
  *
  * @author Wei-Ming Wu
  */
-public enum PrintMode {
+public enum OutputMode {
 
   /** Direct YAML-to-cell mapping, no transformation */
   YAML_ORIENTED,
 
   /** Human-readable with original data preserved in cell comments for roundtrip support */
-  WORKBOOK_READABLE,
+  DISPLAY_MODE,
 
   /** Schema-driven data collection with dropdowns and metadata from JSON Schema */
-  DATA_COLLECT
+  FORM_MODE
 
 }

@@ -41,13 +41,13 @@ import tools.jackson.databind.JsonNode;
  * <ul>
  * <li>Parses YAML via SnakeYAML with comment support</li>
  * <li>Generates Apache POI XSSFWorkbook (.xlsx format)</li>
- * <li>Supports three print modes: YAML_ORIENTED, WORKBOOK_READABLE, DATA_COLLECT</li>
+ * <li>Supports three output modes: YAML_ORIENTED, DISPLAY_MODE, FORM_MODE</li>
  * <li>Supports two indentation modes: CELL_OFFSET (default) and PREFIX</li>
  * </ul>
  *
  * @author Wei-Ming Wu
  * @see YamlWorkbookReader
- * @see PrintMode
+ * @see OutputMode
  * @see IndentationMode
  */
 @Builder
@@ -56,11 +56,11 @@ public class YamlWorkbookWriter {
   private static final Logger log = Logger.getLogger(YamlWorkbookWriter.class.getName());
 
   @Builder.Default
-  private PrintMode printMode = PrintMode.YAML_ORIENTED;
+  private OutputMode outputMode = OutputMode.YAML_ORIENTED;
   @Builder.Default
   private DisplayModeConfig displayModeConfig = DisplayModeConfig.DEFAULT;
   @Builder.Default
-  private DataCollectConfig dataCollectConfig = DataCollectConfig.DEFAULT;
+  private FormModeConfig formModeConfig = FormModeConfig.DEFAULT;
   @Builder.Default
   private WorkbookSyntax workbookSyntax = WorkbookSyntax.DEFAULT;
   @Builder.Default
@@ -95,7 +95,7 @@ public class YamlWorkbookWriter {
       // In prefix mode: level 0 content at col 0, levels 1+ content at col 1
       return indentLevel > 0 ? 1 : 0;
     }
-    return indentLevel * workbookSyntax.getIndentationCellNum();
+    return indentLevel * workbookSyntax.getIndentCellCount();
   }
 
   private void writePrefixIfEnabled(Row row, int indentLevel) {
@@ -206,14 +206,14 @@ public class YamlWorkbookWriter {
       return;
     }
 
-    // Handle block comments based on node type (OBJECT/ARRAY/VALUE comments)
+    // Handle block comments based on node type (MAPPING/SEQUENCE/VALUE comments)
     if (isDisplayMode()) {
       if (node instanceof MappingNode) {
         writeBlockCommentsInDisplayModeReplaceable(node.getBlockComments(), sheet, indentLevel,
-            displayModeConfig.getObjectComment());
+            displayModeConfig.getMappingComment());
       } else if (node instanceof SequenceNode) {
         writeBlockCommentsInDisplayModeReplaceable(node.getBlockComments(), sheet, indentLevel,
-            displayModeConfig.getArrayComment());
+            displayModeConfig.getSequenceComment());
       } else {
         writeComments(node.getBlockComments(), sheet, indentLevel);
       }
@@ -448,14 +448,14 @@ public class YamlWorkbookWriter {
     }
     // Only escape if value STARTS with comment mark or escape mark
     if (value.startsWith(workbookSyntax.getCommentMark())
-        || value.startsWith(workbookSyntax.getValueEscapeMark())) {
-      return workbookSyntax.getValueEscapeMark() + value;
+        || value.startsWith(workbookSyntax.getEscapeMark())) {
+      return workbookSyntax.getEscapeMark() + value;
     }
     return value;
   }
 
   private boolean isDisplayMode() {
-    return printMode == PrintMode.WORKBOOK_READABLE;
+    return outputMode == OutputMode.DISPLAY_MODE;
   }
 
   private String extractCommentText(List<CommentLine> comments) {
@@ -496,9 +496,9 @@ public class YamlWorkbookWriter {
    * @throws RuntimeException if schema parsing or processing fails
    */
   public Workbook toWorkbook() {
-    if (printMode != PrintMode.DATA_COLLECT || jsonSchema == null) {
+    if (outputMode != OutputMode.FORM_MODE || jsonSchema == null) {
       throw new IllegalStateException(
-          "toWorkbook() without parameters requires DATA_COLLECT mode and jsonSchema to be set");
+          "toWorkbook() without parameters requires FORM_MODE and jsonSchema to be set");
     }
 
     resetState();
@@ -508,7 +508,7 @@ public class YamlWorkbookWriter {
 
       // 1. Generate skeleton JSON from schema
       var generator = JsonSchemaDataGenerator.skeleton();
-      if (dataCollectConfig.isSkipAllOf()) {
+      if (formModeConfig.isSkipAllOf()) {
         generator = generator.withAllOfOption(AllOfOption.SKIP);
       }
       JsonNode skeleton = generator.generate(jsonSchema);
@@ -684,7 +684,7 @@ public class YamlWorkbookWriter {
     if (joinedOptions.length() <= 255) {
       // Use explicit list constraint (current behavior)
       addExplicitDropdownValidation(cell, options, sheet);
-    } else if (dataCollectConfig.isUseHiddenSheetsForLongEnums()) {
+    } else if (formModeConfig.isUseHiddenSheetsForLongEnums()) {
       // Write to hidden sheet, use named range
       addNamedRangeDropdownValidation(cell, options, sheet);
     } else {

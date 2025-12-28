@@ -12,8 +12,8 @@ public final class DefaultWorkbookSyntax implements WorkbookSyntax {
 
   public final String frontmatter = "---";
   public final String commentMark = "#";
-  public final String valueEscapeMark = "\\";
+  public final String escapeMark = "\\";
   public final String itemMark = "-";
-  public final Short indentationCellNum = 1;
+  public final Short indentCellCount = 1;
 
 }

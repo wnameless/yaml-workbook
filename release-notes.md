@@ -15,10 +15,10 @@ Initial release with support for:
   - Block comments, inline comments, and end comments are preserved during roundtrip conversion
   - Comments stored in appropriate cells with `#` prefix
 
-- **Three Print Modes**
+- **Three Output Modes**
   - `YAML_ORIENTED` - Direct YAML-to-cell mapping (default)
-  - `WORKBOOK_READABLE` - Human-readable display with original data in cell comments, configurable via `DisplayModeConfig`
-  - `DATA_COLLECT` - Schema-driven data collection with dropdowns from JSON Schema
+  - `DISPLAY_MODE` - Human-readable display with original data in cell comments, configurable via `DisplayModeConfig`
+  - `FORM_MODE` - Schema-driven data collection with dropdowns from JSON Schema
 
 - **Two Indentation Modes**
   - `CELL_OFFSET` - Uses empty cells for indentation (default)
@@ -26,19 +26,19 @@ Initial release with support for:
 
 ### JSON Schema Integration
 
-- Generate Excel forms from JSON Schema definitions in `DATA_COLLECT` mode
+- Generate Excel forms from JSON Schema definitions in `FORM_MODE` mode
 - `title` property used as display name with original key in cell comment
 - `enum` values become dropdown cell validation
 - `enumNames` support for human-readable dropdown options
-- `DataCollectConfig` options:
+- `FormModeConfig` options:
   - `highlightRequired` - Highlight required fields with styling
   - `useHiddenSheetsForLongEnums` - Handle dropdowns exceeding 256 character limit
   - `skipAllOf` - Skip allOf merging for conditional schema patterns
 
-### DisplayModeConfig (WORKBOOK_READABLE)
+### DisplayModeConfig (DISPLAY_MODE)
 
-- Fine-grained control over comment rendering in WORKBOOK_READABLE mode
-- `CommentDisplayOption` for replaceable types (object, array, key, value comments):
+- Fine-grained control over comment rendering in DISPLAY_MODE mode
+- `CommentDisplayOption` for replaceable types (mapping, sequence, key, value comments):
   - `DISPLAY_NAME` - Replace key/value with comment content (default)
   - `HIDDEN` - Show original key/value, ignore comment
   - `COMMENT` - Keep as separate comment cell

@@ -9,7 +9,7 @@ A Java library for bidirectional conversion between YAML and Excel workbooks. It
 
 - **Bidirectional Conversion** — Convert YAML to Excel and Excel back to YAML with full roundtrip support
 - **Comment Preservation** — Block, inline, and end comments are preserved during conversion
-- **Multiple Print Modes** — Three output modes for different use cases (YAML-oriented, human-readable, data collection)
+- **Multiple Output Modes** — Three output modes for different use cases (YAML-oriented, human-readable, data collection)
 - **JSON Schema Integration** — Generate Excel forms with dropdowns from JSON Schema definitions
 - **Flexible Indentation** — Choose between cell-offset or prefix-based indentation for deep nesting
 - **Pluggable Strategies** — Customize sheet naming, node mapping, syntax symbols, and more
@@ -96,26 +96,26 @@ String restored = YamlWorkbook.toYaml(workbook);
 // Comments are preserved!
 ```
 
-# Print Modes
+# Output Modes
 
-The library provides three print modes for different use cases:
+The library provides three output modes for different use cases:
 
 ```java
 // YAML_ORIENTED (default) - Direct YAML-to-cell mapping
 Workbook wb1 = YamlWorkbook.writerBuilder()
-    .printMode(PrintMode.YAML_ORIENTED)
+    .outputMode(OutputMode.YAML_ORIENTED)
     .build()
     .toWorkbook(yamlReader);
 
-// WORKBOOK_READABLE - Human-readable with original data in cell comments
+// DISPLAY_MODE - Human-readable with original data in cell comments
 Workbook wb2 = YamlWorkbook.writerBuilder()
-    .printMode(PrintMode.WORKBOOK_READABLE)
+    .outputMode(OutputMode.DISPLAY_MODE)
     .build()
     .toWorkbook(yamlReader);
 
-// DATA_COLLECT - Schema-driven forms with dropdowns from JSON Schema
+// FORM_MODE - Schema-driven forms with dropdowns from JSON Schema
 Workbook wb3 = YamlWorkbook.writerBuilder()
-    .printMode(PrintMode.DATA_COLLECT)
+    .outputMode(OutputMode.FORM_MODE)
     .jsonSchema(jsonSchemaString)
     .build()
     .toWorkbook();
@@ -124,8 +124,8 @@ Workbook wb3 = YamlWorkbook.writerBuilder()
 | Mode | Description | Use Case |
 |------|-------------|----------|
 | `YAML_ORIENTED` | Direct mapping, comments as cells | Development, debugging |
-| `WORKBOOK_READABLE` | Display names from comments, originals in cell comments | End-user documentation |
-| `DATA_COLLECT` | JSON Schema-driven with dropdowns | Data entry forms |
+| `DISPLAY_MODE` | Display names from comments, originals in cell comments | End-user documentation |
+| `FORM_MODE` | JSON Schema-driven with dropdowns | Data entry forms |
 
 # Indentation Modes
 
@@ -162,7 +162,7 @@ Workbook wb2 = YamlWorkbook.prefixWriterBuilder()
 | 1> | city | NYC |
 | 1> | zip | 10001 |
 
-# JSON Schema Integration (DATA_COLLECT Mode)
+# JSON Schema Integration (FORM_MODE Mode)
 
 Generate Excel forms with dropdowns and validation from JSON Schema:
 
@@ -187,9 +187,9 @@ String jsonSchema = """
     """;
 
 Workbook workbook = YamlWorkbook.writerBuilder()
-    .printMode(PrintMode.DATA_COLLECT)
+    .outputMode(OutputMode.FORM_MODE)
     .jsonSchema(jsonSchema)
-    .dataCollectConfig(DataCollectConfig.builder()
+    .formModeConfig(FormModeConfig.builder()
         .useHiddenSheetsForLongEnums(true)  // Handle large dropdowns
         .skipAllOf(true)                     // Skip allOf for conditional schemas
         .build())
@@ -202,7 +202,7 @@ Features:
 - `enum` values become dropdown cell validation
 - `enumNames` (when present) become dropdown display values
 
-## DataCollectConfig Options
+## FormModeConfig Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
@@ -210,23 +210,35 @@ Features:
 | `useHiddenSheetsForLongEnums` | boolean | false | Use hidden sheets for dropdowns exceeding 256 chars |
 | `skipAllOf` | boolean | false | Skip allOf merging for conditional schema patterns |
 
-# DisplayModeConfig (WORKBOOK_READABLE)
+# DisplayModeConfig (DISPLAY_MODE)
 
-Customize how comments are rendered in WORKBOOK_READABLE mode:
+Customize how comments are rendered in DISPLAY_MODE mode:
 
 ```java
 Workbook workbook = YamlWorkbook.writerBuilder()
-    .printMode(PrintMode.WORKBOOK_READABLE)
+    .outputMode(OutputMode.DISPLAY_MODE)
     .displayModeConfig(DisplayModeConfig.builder()
-        .keyComment(CommentDisplayOption.DISPLAY_NAME)  // Use comment as display name
-        .valueComment(CommentDisplayOption.COMMENT)     // Keep as separate comment cell
+        .mappingComment(CommentDisplayOption.DISPLAY_NAME)  // Use comment as display name for mappings
+        .sequenceComment(CommentDisplayOption.COMMENT)  // Keep as separate comment cell for sequences
         .documentComment(CommentVisibility.HIDDEN)      // Hide document-level comments
         .build())
     .build()
     .toWorkbook(yamlReader);
 ```
 
-## CommentDisplayOption (for replaceable types)
+## DisplayModeConfig Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `mappingComment` | CommentDisplayOption | DISPLAY_NAME | How to handle comments before mappings |
+| `sequenceComment` | CommentDisplayOption | DISPLAY_NAME | How to handle comments before sequences |
+| `keyComment` | CommentDisplayOption | DISPLAY_NAME | How to handle key inline comments |
+| `valueComment` | CommentDisplayOption | DISPLAY_NAME | How to handle value inline comments |
+| `documentComment` | CommentVisibility | HIDDEN | How to handle document-level comments |
+| `keyValuePairComment` | CommentVisibility | HIDDEN | How to handle key-value pair block comments |
+| `itemComment` | CommentVisibility | HIDDEN | How to handle sequence item block comments |
+
+## CommentDisplayOption
 
 | Option | Description |
 |--------|-------------|
@@ -234,7 +246,7 @@ Workbook workbook = YamlWorkbook.writerBuilder()
 | `HIDDEN` | Show original key/value, ignore comment |
 | `COMMENT` | Keep as separate comment cell |
 
-## CommentVisibility (for structural types)
+## CommentVisibility
 
 | Option | Description |
 |--------|-------------|
@@ -308,21 +320,21 @@ Workbook workbook = YamlWorkbook.writerBuilder()
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `printMode` | PrintMode | YAML_ORIENTED | Output format mode |
+| `outputMode` | OutputMode | YAML_ORIENTED | Output format mode |
 | `indentationMode` | IndentationMode | CELL_OFFSET | Indentation representation |
 | `workbookSyntax` | WorkbookSyntax | DEFAULT | YAML symbols configuration |
 | `nodeToSheetMapper` | NodeToSheetMapper | DEFAULT | Document-to-sheet mapping |
 | `sheetNameStrategy` | SheetNameStrategy | DEFAULT | Sheet naming convention |
 | `indentPrefixStrategy` | IndentPrefixStrategy | DEFAULT | Prefix generation (for PREFIX mode) |
-| `displayModeConfig` | DisplayModeConfig | DEFAULT | WORKBOOK_READABLE mode options |
-| `dataCollectConfig` | DataCollectConfig | DEFAULT | DATA_COLLECT mode options |
-| `jsonSchema` | String | null | JSON Schema for DATA_COLLECT mode |
+| `displayModeConfig` | DisplayModeConfig | DEFAULT | DISPLAY_MODE mode options |
+| `dataCollectConfig` | FormModeConfig | DEFAULT | FORM_MODE mode options |
+| `jsonSchema` | String | null | JSON Schema for FORM_MODE mode |
 
 ## Reader Configuration
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `printMode` | PrintMode | YAML_ORIENTED | Expected workbook format |
+| `outputMode` | OutputMode | YAML_ORIENTED | Expected workbook format |
 | `indentationMode` | IndentationMode | CELL_OFFSET | Expected indentation style |
 | `workbookSyntax` | WorkbookSyntax | DEFAULT | YAML symbols configuration |
 | `sheetNameStrategy` | SheetNameStrategy | DEFAULT | Sheet naming convention |
@@ -348,20 +360,20 @@ YamlWorkbook.toYaml(Workbook wb)                  // Workbook to YAML string
 ## YamlWorkbookWriter
 ```java
 YamlWorkbookWriter writer = YamlWorkbook.writerBuilder()
-    .printMode(PrintMode.YAML_ORIENTED)
+    .outputMode(OutputMode.YAML_ORIENTED)
     .build();
 
 // From Reader
 Workbook wb = writer.toWorkbook(new StringReader(yaml));
 
-// From JSON Schema (DATA_COLLECT mode only)
+// From JSON Schema (FORM_MODE mode only)
 Workbook wb = writer.toWorkbook();
 ```
 
 ## YamlWorkbookReader
 ```java
 YamlWorkbookReader reader = YamlWorkbook.readerBuilder()
-    .printMode(PrintMode.YAML_ORIENTED)
+    .outputMode(OutputMode.YAML_ORIENTED)
     .build();
 
 List<Node> nodes = reader.fromWorkbook(workbook);
@@ -376,7 +388,7 @@ List<Node> nodes = reader.fromWorkbook(workbook);
 - SnakeYAML 2.x for YAML parsing (with comment support)
 - Apache POI 5.x for Excel workbook generation (XSSFWorkbook for .xlsx)
 - Jackson 3.x for JSON processing (via jsonschema-data-generator)
-- jsonschema-data-generator for JSON Schema integration in DATA_COLLECT mode
+- jsonschema-data-generator for JSON Schema integration in FORM_MODE mode
 - Lombok for builder pattern support
 
 # License

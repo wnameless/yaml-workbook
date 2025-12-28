@@ -11,10 +11,10 @@ public enum CommentType {
   DOCUMENT,
 
   /** Before mapping node */
-  OBJECT,
+  MAPPING,
 
   /** Before sequence node */
-  ARRAY,
+  SEQUENCE,
 
   /** Before/inline with key */
   KEY,

@@ -35,19 +35,19 @@ import lombok.Builder;
  * <ul>
  * <li>Reconstructs SnakeYAML Node trees from workbook cells</li>
  * <li>Preserves structure and comments for roundtrip conversion</li>
- * <li>Supports the same print modes and indentation modes as {@link YamlWorkbookWriter}</li>
+ * <li>Supports the same output modes and indentation modes as {@link YamlWorkbookWriter}</li>
  * </ul>
  *
  * @author Wei-Ming Wu
  * @see YamlWorkbookWriter
- * @see PrintMode
+ * @see OutputMode
  * @see IndentationMode
  */
 @Builder
 public class YamlWorkbookReader {
 
   @Builder.Default
-  private PrintMode printMode = PrintMode.YAML_ORIENTED;
+  private OutputMode outputMode = OutputMode.YAML_ORIENTED;
   @Builder.Default
   private WorkbookSyntax workbookSyntax = WorkbookSyntax.DEFAULT;
   @Builder.Default
@@ -374,7 +374,7 @@ public class YamlWorkbookReader {
       // In prefix mode: level 0 content at col 0, levels 1+ content at col 1
       return indentLevel > 0 ? 1 : 0;
     }
-    return indentLevel * workbookSyntax.getIndentationCellNum();
+    return indentLevel * workbookSyntax.getIndentCellCount();
   }
 
   private int getIndentLevel(Row row) {
@@ -401,7 +401,7 @@ public class YamlWorkbookReader {
     for (int i = 0; i <= row.getLastCellNum(); i++) {
       String value = getCellValue(row, i);
       if (value != null && !value.isEmpty()) {
-        return i / workbookSyntax.getIndentationCellNum();
+        return i / workbookSyntax.getIndentCellCount();
       }
     }
     return 0;
@@ -458,7 +458,7 @@ public class YamlWorkbookReader {
   }
 
   private boolean isReadableMode() {
-    return printMode == PrintMode.WORKBOOK_READABLE || printMode == PrintMode.DATA_COLLECT;
+    return outputMode == OutputMode.DISPLAY_MODE || outputMode == OutputMode.FORM_MODE;
   }
 
   private List<String> getDropdownOptionsForCell(Cell cell) {
@@ -572,7 +572,7 @@ public class YamlWorkbookReader {
 
   private boolean isComment(String value) {
     return value != null && value.startsWith(workbookSyntax.getCommentMark())
-        && !value.startsWith(workbookSyntax.getValueEscapeMark() + workbookSyntax.getCommentMark());
+        && !value.startsWith(workbookSyntax.getEscapeMark() + workbookSyntax.getCommentMark());
   }
 
   private String unescapeValueIfNeeded(String value) {
@@ -580,8 +580,8 @@ public class YamlWorkbookReader {
       return null;
     }
     // Only unescape if value STARTS with escape mark
-    if (value.startsWith(workbookSyntax.getValueEscapeMark())) {
-      return value.substring(workbookSyntax.getValueEscapeMark().length());
+    if (value.startsWith(workbookSyntax.getEscapeMark())) {
+      return value.substring(workbookSyntax.getEscapeMark().length());
     }
     return value;
   }

@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 /**
- * Configuration for DATA_COLLECT mode.
+ * Configuration for FORM_MODE.
  * <p>
  * Most behaviors are mandatory and not configurable:
  * <ul>
@@ -18,9 +18,9 @@ import lombok.Getter;
  */
 @Getter
 @Builder
-public class DataCollectConfig {
+public class FormModeConfig {
 
-  public static final DataCollectConfig DEFAULT = DataCollectConfig.builder().build();
+  public static final FormModeConfig DEFAULT = FormModeConfig.builder().build();
 
   /** Optional: highlight required fields with styling */
   @Builder.Default

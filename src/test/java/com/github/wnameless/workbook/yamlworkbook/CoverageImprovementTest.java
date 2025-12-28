@@ -39,8 +39,8 @@ class CoverageImprovementTest {
 
     // Verify each value exists
     assertEquals(CommentType.DOCUMENT, CommentType.valueOf("DOCUMENT"));
-    assertEquals(CommentType.OBJECT, CommentType.valueOf("OBJECT"));
-    assertEquals(CommentType.ARRAY, CommentType.valueOf("ARRAY"));
+    assertEquals(CommentType.MAPPING, CommentType.valueOf("MAPPING"));
+    assertEquals(CommentType.SEQUENCE, CommentType.valueOf("SEQUENCE"));
     assertEquals(CommentType.KEY, CommentType.valueOf("KEY"));
     assertEquals(CommentType.VALUE, CommentType.valueOf("VALUE"));
     assertEquals(CommentType.KEY_VALUE_PAIR, CommentType.valueOf("KEY_VALUE_PAIR"));

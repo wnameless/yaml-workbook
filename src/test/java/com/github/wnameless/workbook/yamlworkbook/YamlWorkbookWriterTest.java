@@ -497,7 +497,7 @@ class YamlWorkbookWriterTest {
         """;
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.WORKBOOK_READABLE)
+        .outputMode(OutputMode.DISPLAY_MODE)
         .build();
 
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
@@ -546,7 +546,7 @@ class YamlWorkbookWriterTest {
         .build();
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.WORKBOOK_READABLE)
+        .outputMode(OutputMode.DISPLAY_MODE)
         .displayModeConfig(config)
         .build();
 
@@ -591,7 +591,7 @@ class YamlWorkbookWriterTest {
         """;
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.WORKBOOK_READABLE)
+        .outputMode(OutputMode.DISPLAY_MODE)
         .build();
 
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
@@ -631,7 +631,7 @@ class YamlWorkbookWriterTest {
         .build();
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.WORKBOOK_READABLE)
+        .outputMode(OutputMode.DISPLAY_MODE)
         .displayModeConfig(config)
         .build();
 
@@ -670,7 +670,7 @@ class YamlWorkbookWriterTest {
         .build();
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.WORKBOOK_READABLE)
+        .outputMode(OutputMode.DISPLAY_MODE)
         .displayModeConfig(config)
         .build();
 
@@ -719,7 +719,7 @@ class YamlWorkbookWriterTest {
         """;
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.WORKBOOK_READABLE)
+        .outputMode(OutputMode.DISPLAY_MODE)
         .build();
 
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
@@ -760,7 +760,7 @@ class YamlWorkbookWriterTest {
 
     // Test DISPLAY_NAME (default) - the nested mapping "settings" has a block comment
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.WORKBOOK_READABLE)
+        .outputMode(OutputMode.DISPLAY_MODE)
         .build();
 
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
@@ -797,12 +797,12 @@ class YamlWorkbookWriterTest {
         """;
 
     DisplayModeConfig config = DisplayModeConfig.builder()
-        .objectComment(CommentDisplayOption.HIDDEN)
+        .mappingComment(CommentDisplayOption.HIDDEN)
         .keyValuePairComment(CommentVisibility.HIDDEN)
         .build();
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.WORKBOOK_READABLE)
+        .outputMode(OutputMode.DISPLAY_MODE)
         .displayModeConfig(config)
         .build();
 
@@ -839,7 +839,7 @@ class YamlWorkbookWriterTest {
         """;
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.WORKBOOK_READABLE)
+        .outputMode(OutputMode.DISPLAY_MODE)
         .build();
 
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
@@ -882,7 +882,7 @@ class YamlWorkbookWriterTest {
         .build();
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.WORKBOOK_READABLE)
+        .outputMode(OutputMode.DISPLAY_MODE)
         .displayModeConfig(config)
         .build();
 
@@ -921,7 +921,7 @@ class YamlWorkbookWriterTest {
         """;
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.YAML_ORIENTED)
+        .outputMode(OutputMode.YAML_ORIENTED)
         .build();
 
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
@@ -965,7 +965,7 @@ class YamlWorkbookWriterTest {
         """;
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.YAML_ORIENTED)
+        .outputMode(OutputMode.YAML_ORIENTED)
         .build();
 
     // First call
@@ -1003,7 +1003,7 @@ class YamlWorkbookWriterTest {
         """;
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.YAML_ORIENTED)
+        .outputMode(OutputMode.YAML_ORIENTED)
         .build();
 
     // Call toWorkbook multiple times
@@ -1030,7 +1030,7 @@ class YamlWorkbookWriterTest {
         """;
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.DATA_COLLECT)
+        .outputMode(OutputMode.FORM_MODE)
         .jsonSchema(jsonSchema)
         .build();
 

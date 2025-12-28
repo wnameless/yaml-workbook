@@ -504,13 +504,13 @@ class YamlWorkbookReaderTest {
 
     // Write with DATA_COLLECT mode and hidden sheets for large enums
     // Note: DATA_COLLECT mode generates workbook from schema, not from YAML input
-    DataCollectConfig config = DataCollectConfig.builder()
+    FormModeConfig config = FormModeConfig.builder()
         .useHiddenSheetsForLongEnums(true)
         .build();
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.DATA_COLLECT)
-        .dataCollectConfig(config)
+        .outputMode(OutputMode.FORM_MODE)
+        .formModeConfig(config)
         .jsonSchema(jsonSchema)
         .build();
 
@@ -558,7 +558,7 @@ class YamlWorkbookReaderTest {
 
     // Read with DATA_COLLECT mode (should recover original enum values)
     YamlWorkbookReader reader = YamlWorkbookReader.builder()
-        .printMode(PrintMode.DATA_COLLECT)
+        .outputMode(OutputMode.FORM_MODE)
         .build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
@@ -588,13 +588,13 @@ class YamlWorkbookReaderTest {
     // Test simulating user selection: write workbook, modify cell values, read back
     String jsonSchema = loadJsonSchema("schema/enum-dropdown-test.json");
 
-    DataCollectConfig config = DataCollectConfig.builder()
+    FormModeConfig config = FormModeConfig.builder()
         .useHiddenSheetsForLongEnums(true)
         .build();
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.DATA_COLLECT)
-        .dataCollectConfig(config)
+        .outputMode(OutputMode.FORM_MODE)
+        .formModeConfig(config)
         .jsonSchema(jsonSchema)
         .build();
 
@@ -627,7 +627,7 @@ class YamlWorkbookReaderTest {
 
     // Read back with DATA_COLLECT mode
     YamlWorkbookReader reader = YamlWorkbookReader.builder()
-        .printMode(PrintMode.DATA_COLLECT)
+        .outputMode(OutputMode.FORM_MODE)
         .build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
@@ -678,13 +678,13 @@ class YamlWorkbookReaderTest {
         """;
 
     // Small enums should not create hidden sheets
-    DataCollectConfig config = DataCollectConfig.builder()
+    FormModeConfig config = FormModeConfig.builder()
         .useHiddenSheetsForLongEnums(true)  // Even if true, small enums don't need hidden sheets
         .build();
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.DATA_COLLECT)
-        .dataCollectConfig(config)
+        .outputMode(OutputMode.FORM_MODE)
+        .formModeConfig(config)
         .jsonSchema(jsonSchema)
         .build();
 
@@ -721,7 +721,7 @@ class YamlWorkbookReaderTest {
 
     // Read back and verify
     YamlWorkbookReader reader = YamlWorkbookReader.builder()
-        .printMode(PrintMode.DATA_COLLECT)
+        .outputMode(OutputMode.FORM_MODE)
         .build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
@@ -750,13 +750,13 @@ class YamlWorkbookReaderTest {
     String jsonSchema = loadJsonSchema("schema/enum-dropdown-test.json");
 
     // Disable hidden sheets - large enum will be truncated
-    DataCollectConfig config = DataCollectConfig.builder()
+    FormModeConfig config = FormModeConfig.builder()
         .useHiddenSheetsForLongEnums(false)
         .build();
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.DATA_COLLECT)
-        .dataCollectConfig(config)
+        .outputMode(OutputMode.FORM_MODE)
+        .formModeConfig(config)
         .jsonSchema(jsonSchema)
         .build();
 
@@ -796,7 +796,7 @@ class YamlWorkbookReaderTest {
     // Read back - the dropdown is truncated but value should still be recoverable
     // if it's in the truncated list
     YamlWorkbookReader reader = YamlWorkbookReader.builder()
-        .printMode(PrintMode.DATA_COLLECT)
+        .outputMode(OutputMode.FORM_MODE)
         .build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
@@ -822,13 +822,13 @@ class YamlWorkbookReaderTest {
     // Test that key titles from JSON schema are used and original keys recovered
     String jsonSchema = loadJsonSchema("schema/enum-dropdown-test.json");
 
-    DataCollectConfig config = DataCollectConfig.builder()
+    FormModeConfig config = FormModeConfig.builder()
         .useHiddenSheetsForLongEnums(true)
         .build();
 
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
-        .printMode(PrintMode.DATA_COLLECT)
-        .dataCollectConfig(config)
+        .outputMode(OutputMode.FORM_MODE)
+        .formModeConfig(config)
         .jsonSchema(jsonSchema)
         .build();
 
@@ -871,7 +871,7 @@ class YamlWorkbookReaderTest {
 
     // Read back and verify original keys are recovered
     YamlWorkbookReader reader = YamlWorkbookReader.builder()
-        .printMode(PrintMode.DATA_COLLECT)
+        .outputMode(OutputMode.FORM_MODE)
         .build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
@@ -905,12 +905,12 @@ class YamlWorkbookReaderTest {
 
     // Write with WORKBOOK_READABLE mode (value replaced by comment)
     YamlWorkbookWriter writer =
-        YamlWorkbookWriter.builder().printMode(PrintMode.WORKBOOK_READABLE).build();
+        YamlWorkbookWriter.builder().outputMode(OutputMode.DISPLAY_MODE).build();
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
 
     // Read with WORKBOOK_READABLE mode (should recover original value from cell comment)
     YamlWorkbookReader reader =
-        YamlWorkbookReader.builder().printMode(PrintMode.WORKBOOK_READABLE).build();
+        YamlWorkbookReader.builder().outputMode(OutputMode.DISPLAY_MODE).build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
     assertEquals(1, nodes.size());
@@ -943,12 +943,12 @@ class YamlWorkbookReaderTest {
 
     // Write with WORKBOOK_READABLE mode and keyComment=DISPLAY_NAME (default)
     YamlWorkbookWriter writer =
-        YamlWorkbookWriter.builder().printMode(PrintMode.WORKBOOK_READABLE).build();
+        YamlWorkbookWriter.builder().outputMode(OutputMode.DISPLAY_MODE).build();
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
 
     // Read with WORKBOOK_READABLE mode (should recover original key from cell comment)
     YamlWorkbookReader reader =
-        YamlWorkbookReader.builder().printMode(PrintMode.WORKBOOK_READABLE).build();
+        YamlWorkbookReader.builder().outputMode(OutputMode.DISPLAY_MODE).build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
     assertEquals(1, nodes.size());
@@ -980,13 +980,13 @@ class YamlWorkbookReaderTest {
     DisplayModeConfig config =
         DisplayModeConfig.builder().keyValuePairComment(CommentVisibility.HIDDEN).build();
 
-    YamlWorkbookWriter writer = YamlWorkbookWriter.builder().printMode(PrintMode.WORKBOOK_READABLE)
+    YamlWorkbookWriter writer = YamlWorkbookWriter.builder().outputMode(OutputMode.DISPLAY_MODE)
         .displayModeConfig(config).build();
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
 
     // Read with WORKBOOK_READABLE mode
     YamlWorkbookReader reader =
-        YamlWorkbookReader.builder().printMode(PrintMode.WORKBOOK_READABLE).build();
+        YamlWorkbookReader.builder().outputMode(OutputMode.DISPLAY_MODE).build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
     assertEquals(1, nodes.size());
@@ -1014,11 +1014,11 @@ class YamlWorkbookReaderTest {
         """;
 
     YamlWorkbookWriter writer =
-        YamlWorkbookWriter.builder().printMode(PrintMode.WORKBOOK_READABLE).build();
+        YamlWorkbookWriter.builder().outputMode(OutputMode.DISPLAY_MODE).build();
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
 
     YamlWorkbookReader reader =
-        YamlWorkbookReader.builder().printMode(PrintMode.WORKBOOK_READABLE).build();
+        YamlWorkbookReader.builder().outputMode(OutputMode.DISPLAY_MODE).build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
     assertEquals(1, nodes.size());
@@ -1046,11 +1046,11 @@ class YamlWorkbookReaderTest {
         """;
 
     YamlWorkbookWriter writer =
-        YamlWorkbookWriter.builder().printMode(PrintMode.WORKBOOK_READABLE).build();
+        YamlWorkbookWriter.builder().outputMode(OutputMode.DISPLAY_MODE).build();
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
 
     YamlWorkbookReader reader =
-        YamlWorkbookReader.builder().printMode(PrintMode.WORKBOOK_READABLE).build();
+        YamlWorkbookReader.builder().outputMode(OutputMode.DISPLAY_MODE).build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
     assertEquals(1, nodes.size());
@@ -1079,12 +1079,12 @@ class YamlWorkbookReaderTest {
 
     // Write with WORKBOOK_READABLE mode (creates cell comments)
     YamlWorkbookWriter writer =
-        YamlWorkbookWriter.builder().printMode(PrintMode.WORKBOOK_READABLE).build();
+        YamlWorkbookWriter.builder().outputMode(OutputMode.DISPLAY_MODE).build();
     Workbook workbook = writer.toWorkbook(new java.io.StringReader(yaml));
 
     // Read with YAML_ORIENTED mode (should ignore cell comments, read displayed value)
     YamlWorkbookReader reader =
-        YamlWorkbookReader.builder().printMode(PrintMode.YAML_ORIENTED).build();
+        YamlWorkbookReader.builder().outputMode(OutputMode.YAML_ORIENTED).build();
     List<Node> nodes = reader.fromWorkbook(workbook);
 
     assertEquals(1, nodes.size());
