@@ -206,20 +206,10 @@ public class YamlWorkbookWriter {
       return;
     }
 
-    // Handle block comments based on node type (MAPPING/SEQUENCE/VALUE comments)
-    if (isDisplayMode()) {
-      if (node instanceof MappingNode) {
-        writeBlockCommentsInDisplayModeReplaceable(node.getBlockComments(), sheet, indentLevel,
-            displayModeConfig.getMappingComment());
-      } else if (node instanceof SequenceNode) {
-        writeBlockCommentsInDisplayModeReplaceable(node.getBlockComments(), sheet, indentLevel,
-            displayModeConfig.getSequenceComment());
-      } else {
-        writeComments(node.getBlockComments(), sheet, indentLevel);
-      }
-    } else {
-      writeComments(node.getBlockComments(), sheet, indentLevel);
-    }
+    // Write block comments - note that for MappingNode/SequenceNode VALUE nodes,
+    // SnakeYAML never attaches block comments here (they're on KEY nodes instead).
+    // The mappingComment/sequenceComment config options are handled in traverseMappingNode.
+    writeComments(node.getBlockComments(), sheet, indentLevel);
 
     if (node instanceof ScalarNode scalarNode) {
       traverseScalarNode(scalarNode, sheet, indentLevel);
@@ -268,10 +258,20 @@ public class YamlWorkbookWriter {
       Node keyNode = tuple.getKeyNode();
       Node valueNode = tuple.getValueNode();
 
-      // Handle block comments (KEY_VALUE_PAIR comment type)
+      // Handle block comments based on value node type
+      // SnakeYAML attaches block comments to KEY nodes, so we check the VALUE node type
+      // to determine whether to use mappingComment, sequenceComment, or keyValuePairComment
       if (isDisplayMode()) {
-        writeBlockCommentsInDisplayMode(keyNode.getBlockComments(), sheet, indentLevel,
-            displayModeConfig.getKeyValuePairComment());
+        if (valueNode instanceof MappingNode) {
+          writeBlockCommentsInDisplayModeReplaceable(keyNode.getBlockComments(), sheet, indentLevel,
+              displayModeConfig.getMappingComment());
+        } else if (valueNode instanceof SequenceNode) {
+          writeBlockCommentsInDisplayModeReplaceable(keyNode.getBlockComments(), sheet, indentLevel,
+              displayModeConfig.getSequenceComment());
+        } else {
+          writeBlockCommentsInDisplayMode(keyNode.getBlockComments(), sheet, indentLevel,
+              displayModeConfig.getKeyValuePairComment());
+        }
       } else {
         writeComments(keyNode.getBlockComments(), sheet, indentLevel);
       }

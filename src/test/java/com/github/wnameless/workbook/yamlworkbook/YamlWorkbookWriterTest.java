@@ -750,7 +750,7 @@ class YamlWorkbookWriterTest {
   @Test
   void testDisplayModeObjectComment() throws IOException {
     // Test OBJECT comment - when a nested mapping has a block comment before it
-    // Note: Block comments before keys in mapping go to KEY_VALUE_PAIR, not OBJECT
+    // Block comments before keys whose values are MappingNodes use mappingComment config
     String yaml = """
         user:
           # User Settings
@@ -758,7 +758,7 @@ class YamlWorkbookWriterTest {
             theme: dark
         """;
 
-    // Test DISPLAY_NAME (default) - the nested mapping "settings" has a block comment
+    // Test DISPLAY_NAME (default) - the block comment before "settings" key is shown as header
     YamlWorkbookWriter writer = YamlWorkbookWriter.builder()
         .outputMode(OutputMode.DISPLAY_MODE)
         .build();
@@ -776,13 +776,16 @@ class YamlWorkbookWriterTest {
     // Row 1: user
     assertEquals("user", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
 
-    // Row 2: settings (KEY_VALUE_PAIR comment "User Settings" is HIDDEN by default)
+    // Row 2: User Settings (header row from mappingComment=DISPLAY_NAME)
+    assertEquals("User Settings", sheet.getRow(rowNum++).getCell(1).getStringCellValue());
+
+    // Row 3: settings
     assertEquals("settings", sheet.getRow(rowNum++).getCell(1).getStringCellValue());
 
-    // Row 3: theme | dark
-    Row row3 = sheet.getRow(rowNum++);
-    assertEquals("theme", row3.getCell(2).getStringCellValue());
-    assertEquals("dark", row3.getCell(3).getStringCellValue());
+    // Row 4: theme | dark
+    Row row4 = sheet.getRow(rowNum++);
+    assertEquals("theme", row4.getCell(2).getStringCellValue());
+    assertEquals("dark", row4.getCell(3).getStringCellValue());
 
     workbook.close();
   }
@@ -829,8 +832,8 @@ class YamlWorkbookWriterTest {
 
   @Test
   void testDisplayModeArrayComment() throws IOException {
-    // Test ARRAY comment - block comments before keys go to KEY_VALUE_PAIR
-    // This test verifies the default behavior with KEY_VALUE_PAIR HIDDEN
+    // Test ARRAY comment - block comments before keys whose values are SequenceNodes
+    // use sequenceComment config
     String yaml = """
         # Fruit List
         fruits:
@@ -852,18 +855,21 @@ class YamlWorkbookWriterTest {
     // Row 0: ---
     assertEquals("---", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
 
-    // Row 1: fruits (KEY_VALUE_PAIR comment "Fruit List" is HIDDEN by default)
+    // Row 1: Fruit List (header row from sequenceComment=DISPLAY_NAME)
+    assertEquals("Fruit List", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
+
+    // Row 2: fruits
     assertEquals("fruits", sheet.getRow(rowNum++).getCell(0).getStringCellValue());
 
-    // Row 2: - | apple
-    Row row2 = sheet.getRow(rowNum++);
-    assertEquals("-", row2.getCell(1).getStringCellValue());
-    assertEquals("apple", row2.getCell(2).getStringCellValue());
-
-    // Row 3: - | banana
+    // Row 3: - | apple
     Row row3 = sheet.getRow(rowNum++);
     assertEquals("-", row3.getCell(1).getStringCellValue());
-    assertEquals("banana", row3.getCell(2).getStringCellValue());
+    assertEquals("apple", row3.getCell(2).getStringCellValue());
+
+    // Row 4: - | banana
+    Row row4 = sheet.getRow(rowNum++);
+    assertEquals("-", row4.getCell(1).getStringCellValue());
+    assertEquals("banana", row4.getCell(2).getStringCellValue());
 
     workbook.close();
   }
