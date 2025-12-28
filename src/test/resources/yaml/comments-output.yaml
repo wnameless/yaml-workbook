@@ -1,0 +1,26 @@
+# This is a configuration file
+database: # main database config
+  # Database connection settings
+  host: # server address
+    localhost # primary host
+  port: 5432 # default PostgreSQL port
+  # Credentials
+  username: admin
+  password: secret # change in production
+  connection: # connection pool settings
+    pool_size: # max connections
+      10
+    timeout: # in seconds
+      30 # 30 seconds
+  replicas: # read replicas
+            # test: a block comment never parsed by SnakeYAML
+    - host: replica1.local # first replica
+      port: 5432
+    - host: # second replica address
+        replica2.local
+      port: 5433 # non-standard port
+  allowed_ips: # whitelist
+    - 192.168.1.1 # main server
+    - 192.168.1.2 # backup server
+    # internal network
+    - 10.0.0.1

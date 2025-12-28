@@ -1,0 +1,15 @@
+# Root mapping block comment line 1
+# Root mapping block comment line 2
+# Root mapping block comment line 3
+config:
+  # Database section header line 1
+  # Database section header line 2
+  database:
+    host: localhost
+    port: 5432
+  # Cache section header line 1
+  # Cache section header line 2
+  # Cache section header line 3
+  cache:
+    enabled: true
+    ttl: 3600

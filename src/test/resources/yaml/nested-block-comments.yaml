@@ -1,0 +1,19 @@
+# Root level comment line 1
+# Root level comment line 2
+parent:
+  # Comment before nested mapping line 1
+  # Comment before nested mapping line 2
+  # Comment before nested mapping line 3
+  child:
+    # Grandchild comment line 1
+    # Grandchild comment line 2
+    grandchild:
+      key: value
+items:
+  # Comment before nested sequence line 1
+  # Comment before nested sequence line 2
+  list:
+    # Comment before first item
+    - item1
+    # Comment before second item
+    - item2
